@@ -1,0 +1,9 @@
+{
+  "eslint.validate": ["javascript", "typescript"],
+  "eslint.packageManager": "npm",
+  "editor.formatOnSave": false,
+  "eslint.alwaysShowStatus": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  }
+}
