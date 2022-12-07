@@ -306,12 +306,13 @@ export class IA {
     const nearestEnnemyKnightDistance = nearestEnnemyKnight
       ? Point.distance(nearestEnnemyKnight.position, queen.position)
       : 2000;
+
     if (!myKnightBarracks.length && nearestSitesWithoutTower.length) {
       console.log(`BUILD ${nearestSitesWithoutTower[0].id} BARRACKS-KNIGHT`);
     } else if (
       myTowers.length &&
-      myTowers[0].unit < 500 &&
-      nearestEnnemyKnightDistance > 500
+      myTowers[0].cooldown < 700 &&
+      nearestEnnemyKnightDistance > 200
     ) {
       console.log(`BUILD ${myTowers[0].id} TOWER`);
     } else if (nearestSitesWithoutTower.length && myTowers.length < 3) {

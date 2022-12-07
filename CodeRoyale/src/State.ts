@@ -28,7 +28,7 @@ type Unit = {
   health: number;
 };
 
-type Site = {
+export type Site = {
   id: number;
   position: Point;
   radius: number;
