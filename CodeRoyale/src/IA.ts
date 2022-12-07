@@ -278,19 +278,30 @@ export class IA {
       return ennemyInRadius < 3;
     });
 
-    const nearestSitesWithoutTower = nearestSites.filter(
-      (site) =>
-        !(
-          site.structure === Structure.BARRACKS &&
-          site.owner === Owner.ENNEMY &&
-          site.cooldown > 1
-        ) &&
-        site.structure !== Structure.TOWER &&
-        (site.structure !== Structure.BARRACKS || !site.cooldown) &&
-        (site.structure !== Structure.MINE ||
-          (site.cooldown < 2 && site.maxMineSize < 2)) &&
-        !(site.position.x < 1000 && this.side === Side.DOWN)
-    );
+    const nearestSitesWithoutTower = nearestSites
+      .filter(
+        (site) =>
+          !(
+            site.structure === Structure.BARRACKS &&
+            site.owner === Owner.ENNEMY &&
+            site.cooldown > 1
+          ) &&
+          site.structure !== Structure.TOWER &&
+          (site.structure !== Structure.BARRACKS || !site.cooldown) &&
+          (site.structure !== Structure.MINE ||
+            (site.cooldown < 2 && site.maxMineSize < 2))
+      )
+      .filter((site) => {
+        for (const knight of ennemyKnights) {
+          if (
+            Point.distance(knight.position, site.position) <
+            Point.distance(queen.position, site.position)
+          ) {
+            return false;
+          }
+        }
+        return true;
+      });
     const nearestEnnemyKnight = ennemyKnights[0];
     const nearestEnnemyKnightDistance = nearestEnnemyKnight
       ? Point.distance(nearestEnnemyKnight.position, queen.position)
