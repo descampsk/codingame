@@ -1,4 +1,4 @@
-import { Circle, Point } from "@mathigon/euclid";
+import { Circle, Line, Point } from "@mathigon/euclid";
 import { GameState, Owner, Site, Structure, UnitType } from "./State";
 
 enum Side {
@@ -6,6 +6,11 @@ enum Side {
   DOWN = 1,
   UNKNOWN = 0,
 }
+
+const computeSiteDistance = (
+  siteA: { position: Point },
+  siteB: { position: Point }
+) => Point.distance(siteA.position, siteB.position);
 
 export class IA {
   private state: GameState;
@@ -495,6 +500,79 @@ export class IA {
           `TRAIN ${myKnightBarracks.map((site) => site.id).join(" ")}`
         );
       }
+    } else {
+      console.log("TRAIN");
+    }
+  }
+
+  doTowerRush() {
+    const {
+      nearestSitesEmpty,
+      myTowers,
+      ennemyKnights,
+      queen,
+      myMines,
+      myNearestMines,
+      myGiantBarracks,
+      myKnightBarracks,
+    } = this.state;
+    const possibleMines = nearestSitesEmpty.filter((site) => site.gold > 0);
+    const possibleTowers = nearestSitesEmpty.filter((site) => {
+      if (this.side === Side.DOWN && site.position.x < 1200) {
+        return true;
+      }
+      if (this.side === Side.UP && site.position.x > 700) {
+        return true;
+      }
+      return false;
+    });
+
+    if (
+      ennemyKnights.length &&
+      computeSiteDistance(ennemyKnights[0], queen) < 200
+    ) {
+      console.error("Running away from ennemy");
+      console.error(
+        nearestSitesEmpty[0],
+        computeSiteDistance(nearestSitesEmpty[0], queen)
+      );
+      if (
+        nearestSitesEmpty.length &&
+        computeSiteDistance(nearestSitesEmpty[0], queen) < 200
+      ) {
+        console.error("Building tower because we are near from it");
+        console.log(`BUILD ${nearestSitesEmpty[0].id} TOWER`);
+      } else {
+        console.error("Running");
+        const line = new Line(ennemyKnights[0].position, queen.position);
+        const target = line.at(100);
+        console.log(`MOVE ${Math.round(target.x)} ${Math.round(target.y)}`);
+      }
+    } else if (
+      myNearestMines.length &&
+      myNearestMines[0].cooldown < myNearestMines[0].maxMineSize
+    ) {
+      console.error("Upgrading mine");
+      console.log(`BUILD ${myNearestMines[0].id} MINE`);
+    } else if (!myMines.length && possibleMines.length) {
+      console.error("Building mine because we have any");
+      console.log(`BUILD ${possibleMines[0].id} MINE`);
+    } else if (!myKnightBarracks.length) {
+      console.error("Building Barrack because we have any");
+      console.log(`BUILD ${nearestSitesEmpty[0].id} BARRACKS-KNIGHT`);
+    } else if (myTowers.length && myTowers[0].cooldown < 700) {
+      console.error("Upgrading tower");
+      console.log(`BUILD ${myTowers[0].id} TOWER`);
+    } else if (nearestSitesEmpty.length) {
+      console.error("Building tower");
+      console.log(`BUILD ${nearestSitesEmpty[0].id} TOWER`);
+    } else {
+      console.error("doDefensive waiting", possibleTowers, myTowers);
+      console.log(`WAIT`);
+    }
+
+    if (myKnightBarracks.length) {
+      console.log(`TRAIN ${myKnightBarracks.map((site) => site.id).join(" ")}`);
     } else {
       console.log("TRAIN");
     }

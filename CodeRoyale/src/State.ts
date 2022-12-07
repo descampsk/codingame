@@ -106,6 +106,13 @@ export class GameState {
     health: 0,
   };
 
+  ennemyQueen: Unit = {
+    position: new Point(0, 0),
+    type: UnitType.QUEEN,
+    owner: Owner.ENNEMY,
+    health: 0,
+  };
+
   units: Unit[] = [];
 
   /**
@@ -180,6 +187,9 @@ export class GameState {
     }
     this.queen = this.units.find(
       (unit) => unit.type === UnitType.QUEEN && unit.owner === Owner.ALLY
+    ) as Unit;
+    this.ennemyQueen = this.units.find(
+      (unit) => unit.type === UnitType.QUEEN && unit.owner === Owner.ENNEMY
     ) as Unit;
   }
 
