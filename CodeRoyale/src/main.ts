@@ -13,6 +13,6 @@ while (true) {
 
   ia.checkSide();
   // ia.checkRush();
-  // ia.doGoldAndWait();
-  ia.doTowerRush();
+  ia.doGoldAndWait();
+  // ia.doTowerRush();
 }

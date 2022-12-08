@@ -343,6 +343,23 @@ export class IA {
       });
 
     if (
+      ennemyKnights.length &&
+      computeSiteDistance(ennemyKnights[0], queen) < 200
+    ) {
+      console.error("Running away from ennemy");
+      if (
+        nearestSitesWithoutTower.length &&
+        computeSiteDistance(nearestSitesWithoutTower[0], queen) < 200
+      ) {
+        console.error("Building tower because we are near from it");
+        console.log(`BUILD ${nearestSitesWithoutTower[0].id} TOWER`);
+      } else {
+        console.error("Running");
+        const line = new Line(ennemyKnights[0].position, queen.position);
+        const target = line.at(100);
+        console.log(`MOVE ${Math.round(target.x)} ${Math.round(target.y)}`);
+      }
+    } else if (
       !myKnightBarracks.length &&
       nearestSitesWithoutTower.length &&
       gold > 80
@@ -432,12 +449,7 @@ export class IA {
         return true;
       });
 
-    if (turn < 10 && queen.health <= 25 && !myKnightBarracks.length) {
-      console.log(`BUILD ${possibleMines[0].id} BARRACKS-KNIGHT`);
-    } else if (
-      myIncome >= 9 &&
-      (myTowers.length < 1 || myTowers[0].cooldown < 600)
-    ) {
+    if (myIncome >= 9 && (myTowers.length < 1 || myTowers[0].cooldown < 600)) {
       console.log(
         `BUILD ${myTowers.length ? myTowers[0].id : possibleMines[0].id} TOWER`
       );
@@ -466,7 +478,10 @@ export class IA {
     const { nearestSitesEmpty } = this.state;
     if (nearestSitesEmpty.length) {
       const id =
-        nearestSitesEmpty[1].position.x > nearestSitesEmpty[0].position.x
+        (this.side === Side.UP &&
+          nearestSitesEmpty[1].position.x > nearestSitesEmpty[0].position.x) ||
+        (this.side === Side.DOWN &&
+          nearestSitesEmpty[1].position.x < nearestSitesEmpty[0].position.x)
           ? nearestSitesEmpty[1].id
           : nearestSitesEmpty[0].id;
       console.log(`BUILD ${id} BARRACKS-KNIGHT`);
