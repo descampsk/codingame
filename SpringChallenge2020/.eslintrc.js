@@ -31,5 +31,7 @@ module.exports = {
     "no-restricted-syntax": "off",
     "import/no-unresolved": "off",
     "no-shadow": "off",
+    "import/no-mutable-exports": "off",
+    radix: "off",
   },
 };
