@@ -181,8 +181,7 @@ export class IA {
           if (
             knightToTower < queenToTower &&
             queenToTower > 200 &&
-            knightToTower < 800 &&
-            !(this.side === Side.DOWN && site.position.x > 1000)
+            knightToTower < 800
           ) {
             return false;
           }
@@ -224,10 +223,6 @@ export class IA {
       if (
         nearestSitesWithoutTower.length &&
         computeSiteDistance(nearestSitesWithoutTower[0], queen) < 300
-        // Seems to work badly...
-        // (this.side * queen.position.x <
-        //   this.side * nearestSitesWithoutTower[0].position.x ||
-        //   queen.health > 30)
       ) {
         if (!myKnightBarracks.length && gold > 80) {
           console.error(
