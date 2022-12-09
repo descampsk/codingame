@@ -59,6 +59,8 @@ export class GameState {
 
   goldPerSite: Record<number, number> = {};
 
+  maxMineSizePerSite: Record<number, number> = {};
+
   myMines: Site[] = [];
 
   myNearestMines: Site[] = [];
@@ -162,6 +164,14 @@ export class GameState {
         this.sites[siteId].gold = gold;
       } else {
         this.sites[siteId].gold = this.goldPerSite[siteId] ?? gold;
+      }
+      const maxMineSize = parseInt(siteInput[2], 10);
+      if (maxMineSize !== -1) {
+        this.sites[siteId].maxMineSize = maxMineSize;
+        this.maxMineSizePerSite[siteId] = maxMineSize;
+      } else {
+        this.sites[siteId].maxMineSize =
+          this.maxMineSizePerSite[siteId] ?? maxMineSize;
       }
       this.sites[siteId].maxMineSize = parseInt(siteInput[2], 10);
       this.sites[siteId].structure = parseInt(siteInput[3], 10); // -1 = No structure, 2 = Barracks

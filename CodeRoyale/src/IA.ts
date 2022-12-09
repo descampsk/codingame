@@ -56,7 +56,9 @@ export class IA {
       const distance = Point.distance(position, queenPosition);
       if (
         distance < dangerRadius &&
-        (ennemyKnights.length > 2 || queen.health < 25)
+        (ennemyKnights.length > 2 ||
+          computeSiteDistance(ennemyKnights[0], queen) < 200 ||
+          queen.health < 25)
       ) {
         return true;
       }
@@ -103,6 +105,16 @@ export class IA {
     return true;
   }
 
+  areMinesFullyUpgraded() {
+    const { myMines } = this.state;
+    for (const mine of myMines) {
+      if (mine.cooldown !== mine.maxMineSize) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   canTowerShoot(tower: Site) {
     const { ennemyKnights } = this.state;
     for (const knight of ennemyKnights) {
@@ -127,6 +139,7 @@ export class IA {
       queen,
       myIncome,
       gold,
+      myMines,
     } = this.state;
 
     console.error("doDefensive");
@@ -164,7 +177,7 @@ export class IA {
             (site.cooldown || myIncome > 0)
           ) &&
           (site.structure !== Structure.MINE ||
-            (site.cooldown < 2 && site.maxMineSize < 2))
+            (site.cooldown < 2 && site.maxMineSize < 2 && myMines.length > 3))
       )
       .filter((site) => {
         for (const knight of ennemyKnights) {
@@ -189,7 +202,7 @@ export class IA {
       console.error("Running away from ennemy");
       if (
         nearestSitesWithoutTower.length &&
-        computeSiteDistance(nearestSitesWithoutTower[0], queen) < 400
+        computeSiteDistance(nearestSitesWithoutTower[0], queen) < 300
         // Seems to work badly...
         // (this.side * queen.position.x <
         //   this.side * nearestSitesWithoutTower[0].position.x ||
@@ -204,27 +217,35 @@ export class IA {
             total + (computeSiteDistance(knight, queen) < 100 ? 1 : 0),
           0
         );
+        let target = new Point(0, 0);
         if (ennemiesAround < 3 || !ennemyKnightBarracks.length) {
           console.error("Running far away from the unit");
           const line = new Line(ennemyKnights[0].position, queen.position);
-          const target = line.at(100);
-          console.log(`MOVE ${Math.round(target.x)} ${Math.round(target.y)}`);
+          target = line.at(5);
         } else {
           console.error("Running far away from the barrack");
           const line = new Line(
             ennemyKnightBarracks[0].position,
             queen.position
           );
-          const target = line.at(100);
-          console.log(`MOVE ${Math.round(target.x)} ${Math.round(target.y)}`);
+          target = line.at(5);
         }
+
+        // To avoid blocking on the wall
+        let { x, y } = target;
+        if (target.x > 1920) x = 1920 - 30;
+        if (target.x < 0) x = 30;
+        if (target.y > 1000) y = 1000 - 30;
+        if (target.y < 0) y = 30;
+        console.log(`MOVE ${Math.round(x)} ${Math.round(y)}`);
       }
     } else if (
       !myKnightBarracks.length &&
       nearestSitesWithoutTower.length &&
       gold > 80
     ) {
-      console.log(`BUILD ${nearestSitesWithoutTower[0].id} BARRACKS-KNIGHT`);
+      console.error("Making barracks because attack is the best defense");
+      this.doMakeBarracks();
     } else if (
       myTowers.length &&
       myTowers[0].cooldown < 700 &&
@@ -290,7 +311,6 @@ export class IA {
           !(
             site.owner === Owner.ALLY &&
             site.structure === Structure.TOWER &&
-            myTowers.length <= 3 &&
             site.cooldown > 200
           ) &&
           !(
@@ -321,9 +341,9 @@ export class IA {
         `Building Mines because it has a max size of ${mineToBuild.maxMineSize}`
       );
       console.log(`BUILD ${mineToBuild.id} MINE`);
-    } else if (!myKnightBarracks.length) {
-      console.error("Building Barracks");
-      console.log(`BUILD ${mineToBuild.id} BARRACKS-KNIGHT`);
+      // } else if (!myKnightBarracks.length) {
+      //   console.error("Building Barracks");
+      //   console.log(`BUILD ${mineToBuild.id} BARRACKS-KNIGHT`);
     } else if (possibleMines.length) {
       console.error("Building Mines because it is the last option");
       console.log(`BUILD ${mineToBuild.id} MINE`);
@@ -338,20 +358,39 @@ export class IA {
   }
 
   doMakeBarracks() {
-    const { nearestSitesEmpty } = this.state;
+    console.error("doMakeBarracks");
+    const { nearestSitesEmpty, queen } = this.state;
     const possibleBarracks = nearestSitesEmpty.filter((site) =>
       this.isSafeFromTower(site)
     );
-    if (possibleBarracks.length) {
-      const id =
-        computeSiteDistance(possibleBarracks[1], possibleBarracks[0]) < 300 &&
+    if (possibleBarracks.length > 1) {
+      if (
+        Math.abs(
+          computeSiteDistance(possibleBarracks[1], queen) -
+            computeSiteDistance(possibleBarracks[0], queen)
+        ) < 400 &&
         ((this.side === Side.UP &&
-          possibleBarracks[1].position.x > possibleBarracks[0].position.x) ||
+          possibleBarracks[1].position.x > possibleBarracks[0].position.x &&
+          possibleBarracks[0].position.x < 400) ||
           (this.side === Side.DOWN &&
-            possibleBarracks[1].position.x < possibleBarracks[0].position.x))
-          ? possibleBarracks[1].id
-          : possibleBarracks[0].id;
-      console.log(`BUILD ${id} BARRACKS-KNIGHT`);
+            possibleBarracks[1].position.x < possibleBarracks[0].position.x &&
+            possibleBarracks[0].position.x > 1500))
+      ) {
+        console.error("Building a barrack a bit far away");
+        console.log(`BUILD ${possibleBarracks[1].id} BARRACKS-KNIGHT`);
+      } else {
+        console.error(
+          "Building a barrack because the second is too far away",
+          computeSiteDistance(possibleBarracks[1], queen),
+          computeSiteDistance(possibleBarracks[0], queen),
+          possibleBarracks[1].id,
+          possibleBarracks[0].id
+        );
+        console.log(`BUILD ${possibleBarracks[0].id} BARRACKS-KNIGHT`);
+      }
+    } else if (possibleBarracks.length) {
+      console.error("Building a barrack");
+      console.log(`BUILD ${possibleBarracks[0].id} BARRACKS-KNIGHT`);
     } else {
       console.error("doMakeBarracks waiting", possibleBarracks);
       console.log(`WAIT`);
@@ -359,11 +398,20 @@ export class IA {
   }
 
   doGoldAndWait(maxIncome = 8) {
-    const { myIncome, myKnightBarracks, queen, ennemyQueen, myTowers } =
-      this.state;
+    const {
+      myIncome,
+      myKnightBarracks,
+      queen,
+      ennemyQueen,
+      myTowers,
+      myMines,
+    } = this.state;
     if (this.checkDangerQueen()) {
       this.doDefensive();
-    } else if (myIncome <= maxIncome) {
+    } else if (
+      (myIncome <= maxIncome && myMines.length < 3) ||
+      !this.areMinesFullyUpgraded()
+    ) {
       this.doBuildMines();
     } else if (queen.health <= 10 || myTowers.length < 2) {
       this.doDefensive();
