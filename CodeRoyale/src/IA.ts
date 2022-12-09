@@ -129,23 +129,14 @@ export class IA {
     return false;
   }
 
-  doDefensive() {
-    const {
-      nearestSites,
-      myTowers,
-      myKnightBarracks,
-      ennemyKnightBarracks,
-      ennemyKnights,
-      queen,
-      myIncome,
-      gold,
-      myMines,
-    } = this.state;
-
-    console.error("doDefensive");
-    // We remove towers too near from the ennemy Knights
-    // And with more than 700 health
-    const mySafeTowers = myTowers.filter((tower) => {
+  /**
+   * We remove towers too near from the ennemy Knights
+   * And with more than 700 health
+   * @returns
+   */
+  computeSafeTowers() {
+    const { myTowers, ennemyKnights, queen } = this.state;
+    return myTowers.filter((tower) => {
       if (tower.cooldown > 700) {
         return false;
       }
@@ -162,8 +153,12 @@ export class IA {
         Point.distance(queen.position, tower.position) < 200
       );
     });
+  }
 
-    const nearestSitesWithoutTower = nearestSites
+  computeNearestSitesWithoutTowers() {
+    const { nearestSites, myIncome, myMines, ennemyKnights, queen } =
+      this.state;
+    return nearestSites
       .filter(
         (site) =>
           !(
@@ -194,8 +189,34 @@ export class IA {
         }
         return true;
       });
+  }
+
+  doDefensive() {
+    const {
+      myTowers,
+      myKnightBarracks,
+      ennemyKnightBarracks,
+      ennemyKnights,
+      queen,
+      gold,
+    } = this.state;
+
+    console.error("doDefensive");
+
+    const mySafeTowers = this.computeSafeTowers();
+
+    const nearestSitesWithoutTower = this.computeNearestSitesWithoutTowers();
 
     if (
+      ennemyKnightBarracks.length &&
+      computeSiteDistance(ennemyKnightBarracks[0], queen) < 400 &&
+      queen.health > 30
+    ) {
+      console.error(
+        "Building tower on ennemy barracks because we are near from it"
+      );
+      console.log(`BUILD ${ennemyKnightBarracks[0].id} TOWER`);
+    } else if (
       ennemyKnights.length &&
       computeSiteDistance(ennemyKnights[0], queen) < 200
     ) {
@@ -208,8 +229,15 @@ export class IA {
         //   this.side * nearestSitesWithoutTower[0].position.x ||
         //   queen.health > 30)
       ) {
-        console.error("Building tower because we are near from it");
-        console.log(`BUILD ${nearestSitesWithoutTower[0].id} TOWER`);
+        if (!myKnightBarracks.length && gold > 80) {
+          console.error(
+            "Building barracks because we are near from it and we don't have one"
+          );
+          this.doMakeBarracks();
+        } else {
+          console.error("Building tower because we are near from it");
+          console.log(`BUILD ${nearestSitesWithoutTower[0].id} TOWER`);
+        }
       } else {
         console.error("Running");
         const ennemiesAround = ennemyKnights.reduce(
