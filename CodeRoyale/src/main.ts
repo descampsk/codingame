@@ -12,7 +12,5 @@ while (true) {
   state.refresh();
 
   ia.checkSide();
-  // ia.checkRush();
-  ia.doGoldAndWait();
-  // ia.doTowerRush();
+  ia.doAction();
 }
