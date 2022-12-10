@@ -1,4 +1,4 @@
-import { Circle, Line, Point } from "@mathigon/euclid";
+import { Arc, Circle, intersections, Line, Point } from "@mathigon/euclid";
 import { GameState, Owner, Site, Structure, UnitType } from "./State";
 
 enum Side {
@@ -37,6 +37,65 @@ export class IA {
     if (this.side === Side.UNKNOWN) {
       this.side = this.state.queen.position.x > 500 ? Side.DOWN : Side.UP;
     }
+  }
+
+  moveToPoint(target: { x: number; y: number }) {
+    const { sites, queen, ennemyKnights } = this.state;
+    // To avoid be blocked against wall
+    let { x, y } = target;
+    if (target.x > 1920) x = 1920 - 30;
+    if (target.x < 0) x = 30;
+    if (target.y > 1000) y = 1000 - 30;
+    if (target.y < 0) y = 30;
+
+    const directionX = queen.position.x < x ? 1 : -1;
+    const directionY = queen.position.y < y ? 1 : -1;
+
+    // Not to slow down because of a site
+    const possibleSiteIntersections = Object.values(sites).filter((site) => {
+      const { x: queenX, y: queenY } = queen.position;
+      const { x: siteX, y: siteY } = site.position;
+      return (
+        directionX * queenX < siteX &&
+        directionX * siteX < x &&
+        directionY * queenY < siteY &&
+        directionY * siteY < y
+      );
+    });
+
+    for (const site of possibleSiteIntersections) {
+      // Checking if the line queen, destination go through the site
+      const segment = new Line(queen.position, new Point(x, y));
+      const queenGoThroughSite =
+        intersections(segment, new Circle(site.position, site.radius + 30))
+          .length > 0;
+      if (queenGoThroughSite) {
+        console.error("Can't go directly to destination");
+        const arc1 = new Arc(site.position, queen.position, Math.PI / 4);
+        const destination1 = arc1.end;
+        if (!ennemyKnights.length) {
+          x = destination1.x;
+          y = destination1.y;
+        } else {
+          const arc2 = new Arc(
+            site.position,
+            queen.position,
+            (-1 * Math.PI) / 4
+          );
+          const destination2 = arc2.end;
+          const destination =
+            Point.distance(destination1, ennemyKnights[0].position) <
+            Point.distance(destination2, ennemyKnights[0].position)
+              ? destination2
+              : destination1;
+          x = destination.x;
+          y = destination.y;
+          console.error("Turning around the tower");
+        }
+        break;
+      }
+    }
+    console.log(`MOVE ${Math.round(x)} ${Math.round(y)}`);
   }
 
   checkDangerQueen(dangerRadius = 1000) {
@@ -171,8 +230,10 @@ export class IA {
             site.structure === Structure.BARRACKS &&
             (site.cooldown || myIncome > 0)
           ) &&
-          (site.structure !== Structure.MINE ||
-            (site.cooldown < 2 && site.maxMineSize < 2 && myMines.length > 3))
+          !(
+            site.structure === Structure.MINE &&
+            (site.cooldown > 1 || site.maxMineSize > 1 || myMines.length < 4)
+          )
       )
       .filter((site) => {
         for (const knight of ennemyKnights) {
@@ -188,6 +249,18 @@ export class IA {
         }
         return true;
       });
+  }
+
+  getTowersToUpgrade(radius = 10000) {
+    const { myTowers, queen } = this.state;
+    const circle = new Circle(queen.position, radius);
+    const towersToUpgrade = myTowers.filter(
+      (tower) => circle.contains(tower.position) && tower.cooldown <= 720
+    );
+    return {
+      isAllTowersUpgraded: !towersToUpgrade.length,
+      towersToUpgrade,
+    };
   }
 
   doDefensive() {
@@ -321,6 +394,7 @@ export class IA {
       nearestSites,
       myKnightBarracks,
       myTowers,
+      myIncome,
       ennemyTowers,
       turn,
     } = this.state;
@@ -340,7 +414,7 @@ export class IA {
           !(
             site.owner === Owner.ALLY &&
             site.structure === Structure.BARRACKS &&
-            turn < 50
+            myIncome > 2
           )
       )
       .filter((site) => {
@@ -425,14 +499,33 @@ export class IA {
     }
   }
 
+  doMakeGiantBarracks() {
+    console.error("doMakeGiantBarracks");
+    const { nearestSitesEmpty } = this.state;
+    const possibleBarracks = nearestSitesEmpty.filter((site) =>
+      this.isSafeFromTower(site)
+    );
+    if (possibleBarracks.length) {
+      console.error("Building a giant barrack");
+      console.log(`BUILD ${possibleBarracks[0].id} BARRACKS-GIANT`);
+    } else {
+      console.error("doMakeGiantBarracks waiting", possibleBarracks);
+      console.log(`WAIT`);
+    }
+  }
+
   doAction(maxIncome = 8) {
     const {
       myIncome,
       myKnightBarracks,
+      myGiantBarracks,
       queen,
       ennemyQueen,
       myTowers,
       myMines,
+      myGiants,
+      gold,
+      ennemyTowers,
     } = this.state;
     if (this.checkDangerQueen()) {
       this.doDefensive();
@@ -445,6 +538,8 @@ export class IA {
       this.doDefensive();
     } else if (myKnightBarracks.length <= myIncome / 8) {
       this.doMakeBarracks();
+      // } else if (ennemyTowers.length > 3 && !myGiantBarracks.length) {
+      //   this.doMakeGiantBarracks();
     } else {
       this.doBuildMines();
     }
@@ -455,7 +550,21 @@ export class IA {
           computeSiteDistance(a, ennemyQueen) -
           computeSiteDistance(b, ennemyQueen)
       )[0].id;
-      console.log(`TRAIN ${barrackToTrain}`);
+      if (
+        myGiantBarracks.length &&
+        ennemyTowers.length > 3 &&
+        !myGiants.length
+      ) {
+        if (myGiantBarracks[0].cooldown && myGiantBarracks[0].cooldown < 5) {
+          console.log(`TRAIN ${barrackToTrain}`);
+        } else if (gold > 180) {
+          console.log(`TRAIN ${myGiantBarracks[0].id}`);
+        } else {
+          console.log(`TRAIN ${barrackToTrain}`);
+        }
+      } else {
+        console.log(`TRAIN ${barrackToTrain}`);
+      }
     } else {
       console.log("TRAIN");
     }
