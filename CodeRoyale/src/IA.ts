@@ -389,15 +389,7 @@ export class IA {
 
   doBuildMines() {
     console.error("doBuildMines");
-    const {
-      myNearestMines,
-      nearestSites,
-      myKnightBarracks,
-      myTowers,
-      myIncome,
-      ennemyTowers,
-      turn,
-    } = this.state;
+    const { myNearestMines, nearestSites, ennemyTowers, turn } = this.state;
     const possibleMines = nearestSites
       .filter(
         (site) =>
@@ -414,7 +406,7 @@ export class IA {
           !(
             site.owner === Owner.ALLY &&
             site.structure === Structure.BARRACKS &&
-            myIncome > 2
+            turn < 50
           )
       )
       .filter((site) => {

@@ -40,8 +40,16 @@ export type Site = {
   maxMineSize: number;
 };
 
+enum Side {
+  UP = -1,
+  DOWN = 1,
+  UNKNOWN = 0,
+}
+
 export class GameState {
   turn = 0;
+
+  side: Side = Side.UNKNOWN;
 
   maxHigh = 1000;
 
@@ -219,25 +227,17 @@ export class GameState {
     this.mySites = Object.values(this.sites).filter(
       (site) => site.owner === Owner.ALLY
     );
-    this.myMines = this.mySites.filter(
-      (site) => site.structure === Structure.MINE
-    );
-    this.myIncome = this.myMines.reduce(
-      (previousIncome, site) => previousIncome + site.cooldown,
-      0
-    );
-    this.myNearestMines = this.myMines
-      .filter(
-        (site) =>
-          site.owner === Owner.ALLY &&
-          site.structure === Structure.MINE &&
-          Point.distance(site.position, this.queen.position) < 300
-      )
+    this.myMines = this.mySites
+      .filter((site) => site.structure === Structure.MINE)
       .sort(
         (siteA, siteB) =>
           Point.distance(siteA.position, this.queen.position) -
           Point.distance(siteB.position, this.queen.position)
       );
+    this.myIncome = this.myMines.reduce(
+      (previousIncome, site) => previousIncome + site.cooldown,
+      0
+    );
     this.myTowers = this.mySites
       .filter((site) => site.structure === Structure.TOWER)
       .sort(
@@ -294,8 +294,15 @@ export class GameState {
     );
   }
 
+  checkSide() {
+    if (this.side === Side.UNKNOWN) {
+      this.side = this.queen.position.x > 500 ? Side.DOWN : Side.UP;
+    }
+  }
+
   refresh() {
     this.readInputs();
+    this.checkSide();
     this.computeBarracksInformation();
     this.computeUnitsInformation();
     this.computeSitesInformation();
