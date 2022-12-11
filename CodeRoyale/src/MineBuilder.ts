@@ -26,8 +26,22 @@ export class MineBuilder {
     const { nearestSites, queen, nearestSitesEmpty, myTowers, side } =
       this.state;
     const nearestToQueenSitesEmpty = nearestSites.filter((site) => {
-      if (computeSiteDistance(site, queen) > 500 || site.gold < 50)
+      if (
+        (computeSiteDistance(site, queen) > 500 && myTowers.length < 3) ||
+        site.gold < 50
+      )
         return false;
+
+      if (myTowers.length > 2) {
+        for (const tower of myTowers) {
+          console.error(
+            "chooseBestMineToBuild - no mine before towers",
+            site.id,
+            (site.position.x - tower.position.x) * side
+          );
+          if ((site.position.x - tower.position.x) * side < 0) return false;
+        }
+      }
 
       if (site.owner === Owner.NONE) return true;
 
@@ -56,7 +70,8 @@ export class MineBuilder {
       .sort((a, b) => b.maxMineSize - a.maxMineSize);
     console.error(
       "chooseBestMineToBuild",
-      possibleMines.map(({ id }) => id)
+      nearestToQueenSitesEmpty.map(({ id }) => id),
+      nearestSitesEmpty.map(({ id }) => id)
     );
     return possibleMines[0];
   }

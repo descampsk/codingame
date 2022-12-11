@@ -8,15 +8,31 @@ export class TowerBuilder {
     this.state = state;
   }
 
-  shouldDoAction() {
-    const { myTowers } = this.state;
-    return myTowers.length < 4 || this.canHealTower();
+  isSafeFromTower(site: Site) {
+    const { ennemyTowers, myKnights } = this.state;
+    for (const tower of ennemyTowers) {
+      let isKnightAtRange = false;
+      for (const knight of myKnights) {
+        if (computeSiteDistance(knight, tower) < tower.unit) {
+          isKnightAtRange = true;
+        }
+      }
+      if (computeSiteDistance(site, tower) < tower.unit && !isKnightAtRange) {
+        return false;
+      }
+    }
+    return true;
   }
 
-  getTowersToHeal() {
+  shouldDoAction(health = 700) {
+    const { myTowers } = this.state;
+    return myTowers.length < 4 || this.canHealTower(health);
+  }
+
+  getTowersToHeal(health = 700) {
     const { myTowers } = this.state;
     const towersToHeal = myTowers.slice(0, 3).filter((tower) => {
-      if (!TowerBuilder.isTowerFullUpgraded(tower, 700)) {
+      if (!TowerBuilder.isTowerFullUpgraded(tower, health)) {
         return true;
       }
       return false;
@@ -24,11 +40,11 @@ export class TowerBuilder {
     return towersToHeal;
   }
 
-  canHealTower() {
-    return this.getTowersToHeal().length;
+  canHealTower(health = 700) {
+    return this.getTowersToHeal(health).length;
   }
 
-  hasAtLeastTwoNearSites(site: Site, range = 300) {
+  hasAtLeastTwoNearSites(site: Site, range = 350) {
     const { nearestSites } = this.state;
     let total = 0;
     const neighbors = [];
@@ -44,7 +60,7 @@ export class TowerBuilder {
         neighbors.push({ id, owner, structure });
       }
     }
-    // console.error("hasAtLeastTwoNearSites", site.id, total, neighbors);
+    console.error("hasAtLeastTwoNearSites", site.id, total, neighbors);
     return total > 2;
   }
 
@@ -61,6 +77,7 @@ export class TowerBuilder {
           computeSiteDistance(site, nearestEnnemyKnight)
       )
         return false;
+      if (!this.isSafeFromTower(site)) return false;
       if (this.hasAtLeastTwoNearSites(site)) return true;
       return false;
     });

@@ -1,4 +1,5 @@
 import { Arc, Circle, intersections, Line, Point } from "@mathigon/euclid";
+import { BarrackBuilder } from "./BarrackBuilder";
 import { computeSiteDistance } from "./helper";
 import { GameState, Site } from "./State";
 import { TowerBuilder } from "./TowerBuilder";
@@ -8,9 +9,16 @@ export class Defender {
 
   private towerBuilder: TowerBuilder;
 
-  constructor(state: GameState, towerBuilder: TowerBuilder) {
+  private barrackBuilder: BarrackBuilder;
+
+  constructor(
+    state: GameState,
+    towerBuilder: TowerBuilder,
+    barrackBuilder: BarrackBuilder
+  ) {
     this.state = state;
     this.towerBuilder = towerBuilder;
+    this.barrackBuilder = barrackBuilder;
   }
 
   shouldDoAction(dangerRadius = 1000) {
@@ -68,9 +76,17 @@ export class Defender {
 
   action() {
     console.error("Defender action");
-    const { myTowers, ennemyKnights, queen } = this.state;
+    const {
+      myTowers,
+      ennemyKnights,
+      queen,
+      ennemyKnightBarracks,
+      myKnightBarracks,
+    } = this.state;
     const nearestEnnemyKnight = ennemyKnights[0];
-    if (
+    if (ennemyKnightBarracks.length && !myKnightBarracks.length) {
+      this.barrackBuilder.action();
+    } else if (
       !nearestEnnemyKnight ||
       computeSiteDistance(nearestEnnemyKnight, queen) > 200 ||
       myTowers.length < 3

@@ -1,13 +1,17 @@
 import { computeSiteDistance } from "./helper";
 import { GameState, Owner } from "./State";
+import { TowerBuilder } from "./TowerBuilder";
 
 export class BarrackBuilder {
   private state: GameState;
 
   private bestBarrackToBuildId: number | null = null;
 
+  private towerBuilder: TowerBuilder;
+
   constructor(state: GameState) {
     this.state = state;
+    this.towerBuilder = new TowerBuilder(state);
   }
 
   shouldDoAction() {
@@ -26,6 +30,7 @@ export class BarrackBuilder {
       .filter(
         (site) => computeSiteDistance(site, queen) < nearestSiteDistance + 200
       )
+      .filter((site) => this.towerBuilder.isSafeFromTower(site))
       .sort((a, b) => (a.position.x - b.position.x) * side);
     console.error(
       "chooseBestBarrackToBuild",

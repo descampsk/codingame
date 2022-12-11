@@ -20,7 +20,7 @@ export class GoldIA {
     this.mineBuilder = new MineBuilder(state);
     this.barrackBuilder = new BarrackBuilder(state);
     this.towerBuilder = new TowerBuilder(state);
-    this.defender = new Defender(state, this.towerBuilder);
+    this.defender = new Defender(state, this.towerBuilder, this.barrackBuilder);
   }
 
   train() {
@@ -42,7 +42,7 @@ export class GoldIA {
       mineBuilder.action();
     } else if (barrackBuilder.shouldDoAction()) {
       barrackBuilder.action();
-    } else if (towerBuilder.shouldDoAction()) {
+    } else if (towerBuilder.shouldDoAction(500)) {
       towerBuilder.action();
     } else {
       mineBuilder.action();
