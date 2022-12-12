@@ -1,4 +1,4 @@
-import { doAction } from "./IA";
+import { ia } from "./IA";
 import { getMap, refresh } from "./State";
 
 getMap();
@@ -8,5 +8,6 @@ getMap();
 while (true) {
   refresh();
 
-  doAction()
+  ia.chooseAction();
+  ia.endTurn();
 }

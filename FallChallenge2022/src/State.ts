@@ -1,103 +1,93 @@
 import { Point } from "@mathigon/euclid";
+import { debug } from "./helpers";
 
 export const turn = 0;
 
 export let width = 0;
 export let height = 0;
-export let visiblePelletCount = 0;
-export enum Block {
-  Floor = " ",
-  Wall = "#",
-  Bullet = ".",
+
+export let myMatter = 0;
+export let oppMatter = 0;
+
+export enum Owner {
+  NONE = -1,
+  ME = 1,
+  OPPONENT = 0,
 }
 
-export const map: Record<string, Block> = {};
-
-export type Bullet = {
+export type Block = {
   position: Point;
-  value: number;
+  scrapAmount: number;
+  owner: Owner;
+  units: number;
+  recycler: boolean;
+  canBuild: boolean;
+  canSpawn: boolean;
+  inRangeOfRecycler: boolean;
 };
-export const bullets: Record<string, Bullet> = {};
+export let map: Block[][] = [];
 
-export let myScore = 0;
-export let enemyScore = 0;
+export let blocks: Block[] = [];
+export let emptyBlocks: Block[] = [];
 
-export let visiblePacCount = 0;
+export let myBlocks: Block[] = [];
+export let opponentBlocks: Block[] = [];
 
-export type Pac = {
-  id: number;
-  position: Point;
-  type: string;
-  speedTurnsLeft: number;
-  abilityCooldown: number;
-};
-export const myPacs: Record<number, Pac> = {};
-export const enemyPacs: Record<number, Pac> = {};
+export let myRobots: Block[] = [];
+export let opponentRobots: Block[] = [];
+
+export let myRecyclers: Block[] = [];
+export let opponentRecyclers: Block[] = [];
 
 export const getMap = () => {
   [width, height] = readline()
     .split(" ")
     .map((value) => Number.parseInt(value, 10));
-  for (let i = 0; i < height; i++) {
-    const row: string = readline(); // one line of the grid: space " " is floor, pound "#" is wall
-    for (let j = 0; j < row.length; j++) {
-      map[`${j},${i}`] = row[j] as Block;
-    }
-  }
 };
-
-export const setBlockMap = (x: number, y: number, block: Block) => {
-  map[`${x},${y}`] = block;
-};
-
-export const getBlock = (x: number, y: number) => map[`${x},${y}`];
 
 export const readInputs = () => {
-  const scores: string[] = readline().split(" ");
-  myScore = parseInt(scores[0], 10);
-  enemyScore = parseInt(scores[1], 10);
-  visiblePacCount = parseInt(readline(), 10); // all your pacs and enemy pacs in sight
-  for (let i = 0; i < visiblePacCount; i++) {
-    const inputs: string[] = readline().split(" ");
-    const id: number = parseInt(inputs[0], 10); // pac number (unique within a team)
-    const mine: boolean = inputs[1] !== "0"; // true if this pac is yours
-    const x: number = parseInt(inputs[2], 10); // position in the grid
-    const y: number = parseInt(inputs[3], 10); // position in the grid
-    const type: string = inputs[4]; // unused in wood leagues
-    const speedTurnsLeft: number = parseInt(inputs[5], 10); // unused in wood leagues
-    const abilityCooldown: number = parseInt(inputs[6], 10); // unused in wood leagues
-    if (mine) {
-      myPacs[id] = {
-        id,
-        position: new Point(x, y),
-        type,
-        speedTurnsLeft,
-        abilityCooldown,
-      };
-    } else {
-      enemyPacs[id] = {
-        id,
-        position: new Point(x, y),
-        type,
-        speedTurnsLeft,
-        abilityCooldown,
-      };
+  const matters = readline().split(" ");
+  myMatter = parseInt(matters[0]);
+  oppMatter = parseInt(matters[1]);
+  map = [];
+  for (let i = 0; i < height; i++) {
+    const blocks: Block[] = [];
+    for (let j = 0; j < width; j++) {
+      const inputs = readline().split(" ");
+      const scrapAmount = parseInt(inputs[0]);
+      const owner = parseInt(inputs[1]); // 1 = me, 0 = foe, -1 = neutral
+      const units = parseInt(inputs[2]);
+      const recycler = parseInt(inputs[3]) > 0;
+      const canBuild = parseInt(inputs[4]) > 0;
+      const canSpawn = parseInt(inputs[5]) > 0;
+      const inRangeOfRecycler = parseInt(inputs[6]) > 0;
+      blocks.push({
+        position: new Point(j, i),
+        scrapAmount,
+        owner,
+        units,
+        recycler,
+        canBuild,
+        canSpawn,
+        inRangeOfRecycler,
+      });
     }
+    map.push(blocks);
   }
-  visiblePelletCount = parseInt(readline()); // all pellets in sight
-  for (let i = 0; i < visiblePelletCount; i++) {
-    const inputs: string[] = readline().split(" ");
-    const x: number = parseInt(inputs[0]);
-    const y: number = parseInt(inputs[1]);
-    const value: number = parseInt(inputs[2]); // amount of points this pellet is worth
-    setBlockMap(x, y, Block.Bullet);
-    bullets[`${x},${y}`] = {
-      position: new Point(x, y),
-      value,
-    };
-  }
+};
+
+const computeData = () => {
+  blocks = map.flat();
+  myBlocks = blocks.filter((block) => block.owner === Owner.ME);
+  opponentBlocks = blocks.filter((block) => block.owner === Owner.OPPONENT);
+  emptyBlocks = blocks.filter((block) => block.owner === Owner.NONE);
+  myRobots = myBlocks.filter((block) => block.units > 0);
+  opponentRobots = opponentBlocks.filter((block) => block.units > 0);
+  myRecyclers = myBlocks.filter((block) => block.recycler);
+  opponentRecyclers = opponentBlocks.filter((block) => block.recycler);
 };
 
 export const refresh = () => {
   readInputs();
+  computeData();
 };
