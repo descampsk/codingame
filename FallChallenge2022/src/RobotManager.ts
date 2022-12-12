@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction, SpawnAction } from "./Actions";
 import { computeBlockDistance, debug } from "./helpers";
-import { myRobots, opponentRobots } from "./State";
+import { emptyBlocks, myRobots, opponentRobots } from "./State";
 
 export class RobotManager {
   action() {
@@ -12,10 +12,26 @@ export class RobotManager {
     // );
     // Half of the robots attacks and half of the robots visits
     const visiters = myRobots.slice(0, Math.floor(myRobots.length / 2));
+    const attackers = myRobots.slice(Math.floor(myRobots.length / 2));
+    for (const visiter of visiters) {
+      const nearestEmptyBlock = emptyBlocks.sort(
+        (a, b) =>
+          computeBlockDistance(a, visiter) - computeBlockDistance(b, visiter)
+      )[0];
+      if (nearestEmptyBlock) {
+        actions.push(
+          new MoveAction(
+            visiter.units,
+            visiter.position.x,
+            visiter.position.y,
+            nearestEmptyBlock.position.x,
+            nearestEmptyBlock.position.y
+          )
+        );
+      }
+    }
 
-    for (const robot of myRobots) {
-      // This robot will try to get more grass
-
+    for (const robot of attackers) {
       const { position, units } = robot;
       const nearestOpponent = opponentRobots.sort(
         (a, b) =>
@@ -34,7 +50,7 @@ export class RobotManager {
         debug("Move robot");
         actions.push(
           new MoveAction(
-            1,
+            robot.units,
             position.x,
             position.y,
             nearestOpponent?.position.x,
