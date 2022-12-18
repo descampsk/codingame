@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { BuildAction } from "./Actions";
-import { debug } from "./helpers";
+import { computeManhattanDistance, debug } from "./helpers";
 import {
   Block,
   blocks,
@@ -14,14 +14,7 @@ import {
 export class RecyclerBuilder {
   isNearOfARecycler(block: Block) {
     for (const recycler of myRecyclers) {
-      if (
-        (Math.abs(recycler.position.x - block.position.x) < 3 &&
-          recycler.position.y === block.position.y) ||
-        (Math.abs(recycler.position.y - block.position.y) < 3 &&
-          recycler.position.x === block.position.x) ||
-        (Math.abs(recycler.position.y - block.position.y) === 1 &&
-          Math.abs(recycler.position.x - block.position.x) === 1)
-      ) {
+      if (computeManhattanDistance(recycler, block) < 3) {
         return true;
       }
     }
@@ -49,7 +42,7 @@ export class RecyclerBuilder {
             : nearBlock.scrapAmount;
       }
     }
-    debug("computeTotalGain", total, block.position);
+    // debug("computeTotalGain", total, block.position);
     return total;
   }
 
@@ -60,9 +53,10 @@ export class RecyclerBuilder {
       if (
         block.canBuild &&
         !this.isNearOfARecycler(block) &&
-        this.computeTotalGain(block) > 10
+        this.computeTotalGain(block) > 15
       ) {
         actions.push(new BuildAction(block.position.x, block.position.y));
+        myRecyclers.push(block);
       }
     }
     return actions;

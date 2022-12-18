@@ -2,7 +2,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { computeManhattanDistance, debug } from "./helpers";
-import { Block, myRobots, notMyBlocks } from "./State";
+import { Block, myRobots, notMyBlocks, side } from "./State";
 
 export class RobotManager {
   action() {
@@ -12,11 +12,13 @@ export class RobotManager {
     const targets: Block[] = [];
 
     for (const robot of myRobots) {
-      const nearestEmptyBlocks = notMyBlocks.sort(
-        (a, b) =>
-          computeManhattanDistance(a, robot) -
-          computeManhattanDistance(b, robot)
-      );
+      const nearestEmptyBlocks = notMyBlocks.sort((a, b) => {
+        const distanceA = computeManhattanDistance(a, robot);
+        const distanceB = computeManhattanDistance(b, robot);
+        if (distanceA === distanceB)
+          return side * (b.position.x - a.position.x);
+        return distanceA - distanceB;
+      });
       let i = 0;
       while (
         i < nearestEmptyBlocks.length &&
@@ -32,7 +34,7 @@ export class RobotManager {
         targets.push(nearestEmptyBlock);
         actions.push(
           new MoveAction(
-            robot.units,
+            1,
             robot.position.x,
             robot.position.y,
             nearestEmptyBlock.position.x,

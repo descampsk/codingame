@@ -9,6 +9,12 @@ export let height = 0;
 export let myMatter = 0;
 export let oppMatter = 0;
 
+export enum Side {
+  LEFT = 1,
+  RIGHT = -1,
+  UNKNOWN = 0,
+}
+
 export enum Owner {
   NONE = -1,
   ME = 1,
@@ -25,6 +31,8 @@ export type Block = {
   canSpawn: boolean;
   inRangeOfRecycler: boolean;
 };
+
+export let side: Side = Side.UNKNOWN;
 export let map: Block[][] = [];
 
 export let blocks: Block[] = [];
@@ -89,6 +97,9 @@ const computeData = () => {
   opponentRobots = opponentBlocks.filter((block) => block.units > 0);
   myRecyclers = myBlocks.filter((block) => block.recycler);
   opponentRecyclers = opponentBlocks.filter((block) => block.recycler);
+
+  if (side === Side.UNKNOWN)
+    side = myRobots[0].position.x < width / 2 ? Side.LEFT : Side.RIGHT;
 };
 
 export const refresh = () => {
