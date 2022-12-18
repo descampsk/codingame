@@ -50,16 +50,27 @@ export class RobotBuilder {
             : Infinity;
         }
       }
+
+      const interrestingANeighbors = a.neighbors.filter(
+        (block) => block.owner !== Owner.ME
+      ).length;
+      const interrestingBNeighbors = b.neighbors.filter(
+        (block) => block.owner !== Owner.ME
+      ).length;
+
       // Ordre de priorité
       // - distance à une casse qui ne m'appartient pas
       // - à distance égale, on prend une case ennemie
       // - à case ennemie égale, on prend celle qui est le plus proche des ennemies
-      // - à nombre d'ennemies égale, on prend celle qui a le moins d'unité sur la case
+      // - à distance égale des ennemies, on prend celui qui a le plus de voisins
+      // - à nombre de voisins égals, on prend celle qui a le moins d'unité sur la case
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
       if (nearestABlockOwner !== nearestBBlockOwner)
         return nearestBBlockOwner - nearestABlockOwner;
       if (distanceToNearestOpponentA !== distanceToNearestOpponentB)
         return distanceToNearestOpponentA - distanceToNearestOpponentB;
+      if (interrestingANeighbors !== interrestingBNeighbors)
+        return interrestingBNeighbors - interrestingANeighbors;
       return a.units - b.units;
     });
 

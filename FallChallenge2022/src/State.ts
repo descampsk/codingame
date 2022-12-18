@@ -140,7 +140,7 @@ export const refresh = () => {
   readInputs();
   debug(`############# Turn ${turn} #############`);
 
-  if (turn === 1 || height < 11 || width < 21 || turn > 15) {
+  if (turn === 1 || height < 10 || width < 18 || islands.length > 15) {
     computeDjikstraMap();
   }
 

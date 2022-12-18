@@ -3,7 +3,7 @@
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
 import { debug } from "./helpers";
-import { myRobots, notMyBlocks, side } from "./State";
+import { myRobots, notMyBlocks, Owner, side } from "./State";
 
 export class RobotManager {
   action() {
@@ -24,27 +24,31 @@ export class RobotManager {
       let i = 0;
       while (
         i < nearestEmptyBlocks.length &&
-        targets.find((target) =>
-          target.position.equals(nearestEmptyBlocks[i].position)
+        targets.find(
+          (target) =>
+            target.position.equals(nearestEmptyBlocks[i].position) &&
+            nearestEmptyBlocks[i].owner !== Owner.OPPONENT
         )
       ) {
         i += 1;
       }
 
-      if (i < nearestEmptyBlocks.length) {
-        const nearestEmptyBlock = nearestEmptyBlocks[i];
-        if (robot.distanceToBlock(nearestEmptyBlock) === 1)
-          targets.push(nearestEmptyBlock);
-        actions.push(
-          new MoveAction(
-            1,
-            robot.position.x,
-            robot.position.y,
-            nearestEmptyBlock.position.x,
-            nearestEmptyBlock.position.y
-          )
-        );
-      }
+      const nearestEmptyBlock =
+        i < nearestEmptyBlocks.length
+          ? nearestEmptyBlocks[i]
+          : nearestEmptyBlocks[0];
+
+      if (robot.distanceToBlock(nearestEmptyBlock) === 1)
+        targets.push(nearestEmptyBlock);
+      actions.push(
+        new MoveAction(
+          1,
+          robot.position.x,
+          robot.position.y,
+          nearestEmptyBlock.position.x,
+          nearestEmptyBlock.position.y
+        )
+      );
     }
     return actions;
   }

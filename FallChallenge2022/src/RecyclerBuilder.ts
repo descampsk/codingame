@@ -2,7 +2,18 @@
 import { BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
-import { height, map, myBlocks, myRecyclers, Owner, width } from "./State";
+import {
+  height,
+  map,
+  myBlocks,
+  myRecyclers,
+  myRobots,
+  opponentBlocks,
+  opponentRecyclers,
+  opponentRobots,
+  Owner,
+  width,
+} from "./State";
 
 export class RecyclerBuilder {
   isNearOfARecycler(block: Block) {
@@ -12,6 +23,14 @@ export class RecyclerBuilder {
       }
     }
     return false;
+  }
+
+  isAhead() {
+    return (
+      myBlocks.length >= opponentBlocks.length &&
+      myRecyclers.length >= opponentRecyclers.length &&
+      myRobots.length >= opponentRobots.length
+    );
   }
 
   computeTotalGain(block: Block) {
@@ -47,7 +66,8 @@ export class RecyclerBuilder {
         block.canBuild &&
         !this.isNearOfARecycler(block) &&
         this.computeTotalGain(block) > 15 &&
-        block.island?.owner !== Owner.ME
+        block.island?.owner !== Owner.ME &&
+        !this.isAhead()
       ) {
         actions.push(new BuildAction(block.position.x, block.position.y));
         myRecyclers.push(block);
