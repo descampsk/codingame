@@ -1,7 +1,10 @@
 import { Point } from "@mathigon/euclid";
+import { Block } from "./Block";
+import { dijtstraAlgorithm } from "./djikstra";
 import { debug } from "./helpers";
+import { Island } from "./Island";
 
-export const turn = 0;
+export let turn = 0;
 
 export let width = 0;
 export let height = 0;
@@ -21,22 +24,13 @@ export enum Owner {
   OPPONENT = 0,
 }
 
-export type Block = {
-  position: Point;
-  scrapAmount: number;
-  owner: Owner;
-  units: number;
-  recycler: boolean;
-  canBuild: boolean;
-  canSpawn: boolean;
-  inRangeOfRecycler: boolean;
-};
-
 export let side: Side = Side.UNKNOWN;
-export let map: Block[][] = [];
+export const map: Block[][] = [];
 
 export let blocks: Block[] = [];
 export let emptyBlocks: Block[] = [];
+
+export let islands: Island[] = [];
 
 export let myBlocks: Block[] = [];
 export let notMyBlocks: Block[] = [];
@@ -45,6 +39,8 @@ export let opponentBlocks: Block[] = [];
 export let myRobots: Block[] = [];
 export let opponentRobots: Block[] = [];
 
+export const myRobotsDistanceMap: Record<string, number[][]> = {};
+
 export let myRecyclers: Block[] = [];
 export let opponentRecyclers: Block[] = [];
 
@@ -52,15 +48,23 @@ export const getMap = () => {
   [width, height] = readline()
     .split(" ")
     .map((value) => Number.parseInt(value, 10));
+  for (let i = 0; i < height; i++) {
+    const blocks: Block[] = [];
+    for (let j = 0; j < width; j++) {
+      blocks.push(
+        new Block(new Point(j, i), 0, Owner.NONE, 0, false, false, false, false)
+      );
+    }
+    map.push(blocks);
+  }
 };
 
 export const readInputs = () => {
+  const readInputsStart = new Date();
   const matters = readline().split(" ");
   myMatter = parseInt(matters[0]);
   oppMatter = parseInt(matters[1]);
-  map = [];
   for (let i = 0; i < height; i++) {
-    const blocks: Block[] = [];
     for (let j = 0; j < width; j++) {
       const inputs = readline().split(" ");
       const scrapAmount = parseInt(inputs[0]);
@@ -70,8 +74,7 @@ export const readInputs = () => {
       const canBuild = parseInt(inputs[4]) > 0;
       const canSpawn = parseInt(inputs[5]) > 0;
       const inRangeOfRecycler = parseInt(inputs[6]) > 0;
-      blocks.push({
-        position: new Point(j, i),
+      map[i][j].update({
         scrapAmount,
         owner,
         units,
@@ -81,28 +84,75 @@ export const readInputs = () => {
         inRangeOfRecycler,
       });
     }
-    map.push(blocks);
   }
+
+  const endReadInputs = new Date().getTime() - readInputsStart.getTime();
+  debug("ReadInputs time: %dms", endReadInputs);
 };
 
 const computeData = () => {
+  const computeDataStart = new Date();
   blocks = map.flat();
-  myBlocks = blocks.filter((block) => block.owner === Owner.ME);
-  notMyBlocks = blocks.filter(
-    (block) => block.owner !== Owner.ME && block.scrapAmount > 0
-  );
-  opponentBlocks = blocks.filter((block) => block.owner === Owner.OPPONENT);
-  emptyBlocks = blocks.filter((block) => block.owner === Owner.NONE);
-  myRobots = myBlocks.filter((block) => block.units > 0);
-  opponentRobots = opponentBlocks.filter((block) => block.units > 0);
-  myRecyclers = myBlocks.filter((block) => block.recycler);
-  opponentRecyclers = opponentBlocks.filter((block) => block.recycler);
+  myBlocks = [];
+  notMyBlocks = [];
+  opponentBlocks = [];
+  emptyBlocks = [];
+  myRobots = [];
+  opponentRobots = [];
+  myRecyclers = [];
+  opponentRecyclers = [];
+
+  blocks.forEach((block) => {
+    block.updateNeighbors();
+    if (block.owner === Owner.ME) myBlocks.push(block);
+    if (block.owner !== Owner.ME && block.scrapAmount > 0)
+      notMyBlocks.push(block);
+    if (block.owner === Owner.OPPONENT) opponentBlocks.push(block);
+    if (block.owner === Owner.NONE) emptyBlocks.push(block);
+    if (block.owner === Owner.ME && block.units) myRobots.push(block);
+    if (block.owner === Owner.OPPONENT && block.units)
+      opponentRobots.push(block);
+    if (block.owner === Owner.ME && block.recycler) myRecyclers.push(block);
+    if (block.owner === Owner.OPPONENT && block.recycler)
+      opponentRecyclers.push(block);
+  });
 
   if (side === Side.UNKNOWN)
     side = myRobots[0].position.x < width / 2 ? Side.LEFT : Side.RIGHT;
+
+  const computeDataEnd = new Date().getTime() - computeDataStart.getTime();
+  debug("computeData time: %dms", computeDataEnd);
+};
+
+const computeDjikstraMap = () => {
+  const computeDjikstraMapStart = new Date();
+  for (let i = 0; i < height; i++) {
+    for (let j = 0; j < width; j++) {
+      map[i][j].djikstraMap = dijtstraAlgorithm(map, i, j);
+    }
+  }
+  const computeDjikstraMapEnd =
+    new Date().getTime() - computeDjikstraMapStart.getTime();
+  debug("computeDjikstraMap time: %dms", computeDjikstraMapEnd);
 };
 
 export const refresh = () => {
+  turn += 1;
   readInputs();
+  debug(`############# Turn ${turn} #############`);
+
+  if (turn === 1) {
+    computeDjikstraMap();
+  }
+
   computeData();
+
+  islands = Island.findIslands();
+  //   debug(
+  //     "islands:",
+  //     islands.length,
+  //     islands.map((island) => island.blocks[0].position)
+  //   );
+
+  //   debug(map[2][18]);
 };

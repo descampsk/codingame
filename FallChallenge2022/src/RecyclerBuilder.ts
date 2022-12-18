@@ -1,15 +1,8 @@
 /* eslint-disable class-methods-use-this */
 import { BuildAction } from "./Actions";
+import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
-import {
-  Block,
-  blocks,
-  height,
-  map,
-  myBlocks,
-  myRecyclers,
-  width,
-} from "./State";
+import { height, map, myBlocks, myRecyclers, Owner, width } from "./State";
 
 export class RecyclerBuilder {
   isNearOfARecycler(block: Block) {
@@ -53,7 +46,8 @@ export class RecyclerBuilder {
       if (
         block.canBuild &&
         !this.isNearOfARecycler(block) &&
-        this.computeTotalGain(block) > 15
+        this.computeTotalGain(block) > 15 &&
+        block.island?.owner !== Owner.ME
       ) {
         actions.push(new BuildAction(block.position.x, block.position.y));
         myRecyclers.push(block);

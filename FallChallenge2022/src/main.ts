@@ -9,9 +9,9 @@ getMap();
 while (true) {
   const start = new Date();
   refresh();
-
   ia.chooseAction();
   ia.endTurn();
   const end = new Date().getTime() - start.getTime();
   debug("Execution time: %dms", end);
+  debug(`############# End of Turn #############`);
 }

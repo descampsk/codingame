@@ -1,8 +1,9 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
-import { computeManhattanDistance, debug } from "./helpers";
-import { Block, myRobots, notMyBlocks, side } from "./State";
+import { Block } from "./Block";
+import { debug } from "./helpers";
+import { myRobots, notMyBlocks, side } from "./State";
 
 export class RobotManager {
   action() {
@@ -13,10 +14,11 @@ export class RobotManager {
 
     for (const robot of myRobots) {
       const nearestEmptyBlocks = notMyBlocks.sort((a, b) => {
-        const distanceA = computeManhattanDistance(a, robot);
-        const distanceB = computeManhattanDistance(b, robot);
-        if (distanceA === distanceB)
+        const distanceA = robot.distanceToBlock(a);
+        const distanceB = robot.distanceToBlock(b);
+        if (distanceA === distanceB && a.owner === b.owner)
           return side * (b.position.x - a.position.x);
+        if (distanceA === distanceB) return b.owner - a.owner;
         return distanceA - distanceB;
       });
       let i = 0;
@@ -31,7 +33,8 @@ export class RobotManager {
 
       if (i < nearestEmptyBlocks.length) {
         const nearestEmptyBlock = nearestEmptyBlocks[i];
-        targets.push(nearestEmptyBlock);
+        if (robot.distanceToBlock(nearestEmptyBlock) === 1)
+          targets.push(nearestEmptyBlock);
         actions.push(
           new MoveAction(
             1,
