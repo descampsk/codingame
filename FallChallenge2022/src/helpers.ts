@@ -5,7 +5,9 @@ export const debug = (...data: any[]) => {
   console.error(...data);
 };
 
-export const computeBlockDistance = (
+export const computeManhattanDistance = (
   blockA: { position: Point },
   blockB: { position: Point }
-) => Point.distance(blockA.position, blockB.position);
+) =>
+  Math.abs(blockA.position.x - blockB.position.x) +
+  Math.abs(blockA.position.y - blockB.position.y);

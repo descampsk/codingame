@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action } from "./Actions";
 import { recyclerBuilder } from "./RecyclerBuilder";
+import { robotBuilder } from "./RobotBuilder";
 import { robotManager } from "./RobotManager";
 
 export class IA {
@@ -9,7 +10,12 @@ export class IA {
   chooseAction() {
     const recyclerActions = recyclerBuilder.action();
     const robotActions = robotManager.action();
-    this.actions = [...recyclerActions, ...robotActions];
+    const robotBuilderActions = robotBuilder.action();
+    this.actions = [
+      ...recyclerActions,
+      ...robotActions,
+      ...robotBuilderActions,
+    ];
   }
 
   endTurn() {

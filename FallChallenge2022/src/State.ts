@@ -31,6 +31,7 @@ export let blocks: Block[] = [];
 export let emptyBlocks: Block[] = [];
 
 export let myBlocks: Block[] = [];
+export let notMyBlocks: Block[] = [];
 export let opponentBlocks: Block[] = [];
 
 export let myRobots: Block[] = [];
@@ -79,6 +80,9 @@ export const readInputs = () => {
 const computeData = () => {
   blocks = map.flat();
   myBlocks = blocks.filter((block) => block.owner === Owner.ME);
+  notMyBlocks = blocks.filter(
+    (block) => block.owner !== Owner.ME && block.scrapAmount > 0
+  );
   opponentBlocks = blocks.filter((block) => block.owner === Owner.OPPONENT);
   emptyBlocks = blocks.filter((block) => block.owner === Owner.NONE);
   myRobots = myBlocks.filter((block) => block.units > 0);
