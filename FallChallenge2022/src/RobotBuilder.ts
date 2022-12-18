@@ -18,34 +18,49 @@ export class RobotBuilder {
 
     const blocksToSpawn = myBlocks.filter((block) => block.canSpawn);
     blocksToSpawn.sort((a, b) => {
-      let minAToEmpty = 100000;
-      let minBToEmpty = 100000;
+      let minAToEmpty = Infinity;
+      let minBToEmpty = Infinity;
       let nearestABlockOwner = Owner.NONE;
       let nearestBBlockOwner = Owner.NONE;
+      let distanceToNearestOpponentA = Infinity;
+      let distanceToNearestOpponentB = Infinity;
       for (const emptyBlock of notMyBlocks) {
         const distanceA = a.distanceToBlock(emptyBlock);
         const distanceB = b.distanceToBlock(emptyBlock);
         if (distanceA < minAToEmpty) {
           minAToEmpty = distanceA;
           nearestABlockOwner = emptyBlock.owner;
+          const [nearestOpponentA] = opponentRobots.sort(
+            (opponentA, opponentB) =>
+              opponentA.distanceToBlock(a) - opponentB.distanceToBlock(a)
+          );
+          distanceToNearestOpponentA = nearestOpponentA
+            ? nearestOpponentA.distanceToBlock(a)
+            : Infinity;
         }
         if (distanceB < minBToEmpty) {
           minBToEmpty = distanceB;
           nearestBBlockOwner = emptyBlock.owner;
+          const [nearestOpponentB] = opponentRobots.sort(
+            (opponentA, opponentB) =>
+              opponentA.distanceToBlock(b) - opponentB.distanceToBlock(b)
+          );
+          distanceToNearestOpponentB = nearestOpponentB
+            ? nearestOpponentB.distanceToBlock(b)
+            : Infinity;
         }
       }
       // Ordre de priorité
       // - distance à une casse qui ne m'appartient pas
       // - à distance égale, on prend une case ennemie
-      // - à case ennemie égale, on prend celle où y a le plus d'unité ennemies à côté - TODO
-      // - à nombre d'ennemies égale, on prend celle qui a le moins d'unité
-      // - à unité égale on prend celle qui est le plus de l'autre côté du début
+      // - à case ennemie égale, on prend celle qui est le plus proche des ennemies
+      // - à nombre d'ennemies égale, on prend celle qui a le moins d'unité sur la case
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
       if (nearestABlockOwner !== nearestBBlockOwner)
         return nearestBBlockOwner - nearestABlockOwner;
-      // TODO - checker le nombre d'unités proche
-      if (a.units !== b.units) return a.units - b.units;
-      return side * (b.position.x - a.position.x);
+      if (distanceToNearestOpponentA !== distanceToNearestOpponentB)
+        return distanceToNearestOpponentA - distanceToNearestOpponentB;
+      return a.units - b.units;
     });
 
     let blockToSpawnIndex = 0;

@@ -105,8 +105,7 @@ const computeData = () => {
   blocks.forEach((block) => {
     block.updateNeighbors();
     if (block.owner === Owner.ME) myBlocks.push(block);
-    if (block.owner !== Owner.ME && block.scrapAmount > 0)
-      notMyBlocks.push(block);
+    if (block.owner !== Owner.ME && block.canMove) notMyBlocks.push(block);
     if (block.owner === Owner.OPPONENT) opponentBlocks.push(block);
     if (block.owner === Owner.NONE) emptyBlocks.push(block);
     if (block.owner === Owner.ME && block.units) myRobots.push(block);
@@ -141,7 +140,7 @@ export const refresh = () => {
   readInputs();
   debug(`############# Turn ${turn} #############`);
 
-  if (turn === 1) {
+  if (turn === 1 || height < 11 || width < 21 || turn > 15) {
     computeDjikstraMap();
   }
 
