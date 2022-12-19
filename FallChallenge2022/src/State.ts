@@ -10,6 +10,10 @@ export let width = 0;
 export let height = 0;
 
 export let myMatter = 0;
+export const setMyMatter = (newMatter: number) => {
+  myMatter = newMatter;
+};
+
 export let oppMatter = 0;
 
 export enum Side {
@@ -38,6 +42,7 @@ export let opponentBlocks: Block[] = [];
 
 export let myRobots: Block[] = [];
 export let opponentRobots: Block[] = [];
+export let dangerousOpponentRobots: Block[] = [];
 
 export const myRobotsDistanceMap: Record<string, number[][]> = {};
 
@@ -99,6 +104,7 @@ const computeData = () => {
   emptyBlocks = [];
   myRobots = [];
   opponentRobots = [];
+  dangerousOpponentRobots = [];
   myRecyclers = [];
   opponentRecyclers = [];
 
@@ -114,6 +120,7 @@ const computeData = () => {
     if (block.owner === Owner.ME && block.recycler) myRecyclers.push(block);
     if (block.owner === Owner.OPPONENT && block.recycler)
       opponentRecyclers.push(block);
+    if (block.isDangerousRobotOpponent) dangerousOpponentRobots.push(block);
   });
 
   if (side === Side.UNKNOWN)
@@ -125,11 +132,17 @@ const computeData = () => {
 
 const computeDjikstraMap = () => {
   const computeDjikstraMapStart = new Date();
-  for (let i = 0; i < height; i++) {
-    for (let j = 0; j < width; j++) {
-      map[i][j].djikstraMap = dijtstraAlgorithm(map, i, j);
-    }
-  }
+  const usefullBlocks = blocks.filter(
+    (block) => block.canMove && block.owner === Owner.ME
+  );
+  usefullBlocks.forEach((block) => {
+    // eslint-disable-next-line no-param-reassign
+    block.djikstraMap = dijtstraAlgorithm(
+      map,
+      block.position.y,
+      block.position.x
+    );
+  });
   const computeDjikstraMapEnd =
     new Date().getTime() - computeDjikstraMapStart.getTime();
   debug("computeDjikstraMap time: %dms", computeDjikstraMapEnd);
@@ -140,11 +153,9 @@ export const refresh = () => {
   readInputs();
   debug(`############# Turn ${turn} #############`);
 
-  if (turn === 1 || height < 10 || width < 18 || islands.length > 15) {
-    computeDjikstraMap();
-  }
-
   computeData();
+
+  computeDjikstraMap();
 
   islands = Island.findIslands();
   //   debug(
@@ -153,5 +164,8 @@ export const refresh = () => {
   //     islands.map((island) => island.blocks[0].position)
   //   );
 
-  //   debug(map[2][18]);
+  debug(
+    "dangerousOpponentRobots",
+    dangerousOpponentRobots.map((robot) => robot.position)
+  );
 };

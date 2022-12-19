@@ -6,12 +6,14 @@ import {
   height,
   map,
   myBlocks,
+  myMatter,
   myRecyclers,
   myRobots,
   opponentBlocks,
   opponentRecyclers,
   opponentRobots,
   Owner,
+  setMyMatter,
   width,
 } from "./State";
 
@@ -61,17 +63,19 @@ export class RecyclerBuilder {
   action() {
     const actions: BuildAction[] = [];
     debug("RecyclerBuilder action");
-    for (const block of myBlocks) {
-      if (
+    const possibleRecyclers = myBlocks.filter(
+      (block) =>
         block.canBuild &&
         !this.isNearOfARecycler(block) &&
-        this.computeTotalGain(block) > 15 &&
+        this.computeTotalGain(block) > 20 &&
         block.island?.owner !== Owner.ME &&
         !this.isAhead()
-      ) {
-        actions.push(new BuildAction(block.position.x, block.position.y));
-        myRecyclers.push(block);
-      }
+    );
+    if (possibleRecyclers.length) {
+      const recycler = possibleRecyclers[0];
+      actions.push(new BuildAction(recycler.position.x, recycler.position.y));
+      myRecyclers.push(recycler);
+      setMyMatter(myMatter - 10);
     }
     return actions;
   }

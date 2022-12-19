@@ -1,7 +1,7 @@
 /* eslint-disable no-useless-constructor */
 import { Point } from "@mathigon/euclid";
 import { Island } from "./Island";
-import { map, Owner } from "./State";
+import { height, map, Owner, width } from "./State";
 
 export class Block {
   public djikstraMap: number[][] = [];
@@ -10,6 +10,8 @@ export class Block {
 
   // eslint-disable-next-line no-use-before-define
   public neighbors: Block[] = [];
+
+  public isGrassInXTurn = 0;
 
   constructor(
     public position: Point,
@@ -24,6 +26,24 @@ export class Block {
 
   public get canMove(): boolean {
     return !this.recycler && this.scrapAmount > 0;
+  }
+
+  public get isDangerousRobotOpponent(): boolean {
+    if (this.owner !== Owner.OPPONENT || this.units === 0) return false;
+
+    const { x, y } = this.position;
+    let ownerBlockDifference = 0;
+    for (let i = -2; i <= 2; i++) {
+      for (let j = -2; j <= 2; j++) {
+        if (x + j > 0 && y + i >= 0 && x + j < width && y + i < height) {
+          const block = map[y + i][x + j];
+          if (block.owner === Owner.ME) ownerBlockDifference += 1;
+          if (block.owner === Owner.OPPONENT) ownerBlockDifference -= 1;
+        }
+      }
+    }
+
+    return ownerBlockDifference > 3;
   }
 
   updateNeighbors() {

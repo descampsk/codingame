@@ -34,10 +34,10 @@ export class RobotBuilder {
           nearestABlockOwner = emptyBlock.owner;
           const [nearestOpponentA] = opponentRobots.sort(
             (opponentA, opponentB) =>
-              opponentA.distanceToBlock(a) - opponentB.distanceToBlock(a)
+              a.distanceToBlock(opponentA) - a.distanceToBlock(opponentB)
           );
           distanceToNearestOpponentA = nearestOpponentA
-            ? nearestOpponentA.distanceToBlock(a)
+            ? a.distanceToBlock(nearestOpponentA)
             : Infinity;
         }
         if (distanceB < minBToEmpty) {
@@ -45,10 +45,10 @@ export class RobotBuilder {
           nearestBBlockOwner = emptyBlock.owner;
           const [nearestOpponentB] = opponentRobots.sort(
             (opponentA, opponentB) =>
-              opponentA.distanceToBlock(b) - opponentB.distanceToBlock(b)
+              b.distanceToBlock(opponentA) - b.distanceToBlock(opponentB)
           );
           distanceToNearestOpponentB = nearestOpponentB
-            ? nearestOpponentB.distanceToBlock(b)
+            ? b.distanceToBlock(nearestOpponentB)
             : Infinity;
         }
       }
