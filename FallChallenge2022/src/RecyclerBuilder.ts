@@ -65,15 +65,20 @@ export class RecyclerBuilder {
   action() {
     const actions: BuildAction[] = [];
     debug("RecyclerBuilder action");
-    const possibleRecyclers = myBlocks.filter(
-      (block) =>
-        block.canBuild &&
-        !this.isNearOfARecycler(block) &&
-        this.computeTotalGain(block) > 20 &&
-        block.island?.owner !== Owner.ME &&
-        !this.isAhead()
-      // !dangerousOpponentRobots.length
-    );
+    const possibleRecyclers = myBlocks
+      .filter(
+        (block) =>
+          block.canBuild &&
+          !this.isNearOfARecycler(block) &&
+          this.computeTotalGain(block) > 20 &&
+          block.island?.owner !== Owner.ME
+      )
+      .sort((a, b) => {
+        const gainA = this.computeTotalGain(a);
+        const gainB = this.computeTotalGain(b);
+        if (gainA !== gainB) return gainB - gainA;
+        return a.neighbors.length - b.neighbors.length;
+      });
     if (possibleRecyclers.length) {
       let createBadIsland = false;
       let recycler = possibleRecyclers[0];
