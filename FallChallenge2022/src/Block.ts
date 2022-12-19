@@ -28,6 +28,31 @@ export class Block {
     return !this.recycler && this.scrapAmount > 0;
   }
 
+  public get isGrass(): boolean {
+    return this.scrapAmount === 0;
+  }
+
+  public get willBecomeGrass(): number {
+    let grassInXTurn = this.scrapAmount;
+    let totalRecycler = 0;
+    const { x, y } = this.position;
+    for (let i = -1; i <= 1; i++) {
+      for (let j = -1; j <= 1; j++) {
+        if (x + j > 0 && y + i >= 0 && x + j < width && y + i < height) {
+          const block = map[y + i][x + j];
+          if (block.recycler) {
+            grassInXTurn -= block.scrapAmount;
+            totalRecycler += 1;
+          }
+        }
+      }
+    }
+
+    return grassInXTurn > 0
+      ? Infinity
+      : Math.round(grassInXTurn / totalRecycler);
+  }
+
   public get isDangerousRobotOpponent(): boolean {
     if (this.owner !== Owner.OPPONENT || this.units === 0) return false;
 

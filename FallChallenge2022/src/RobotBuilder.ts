@@ -1,7 +1,9 @@
 /* eslint-disable class-methods-use-this */
 import { Action, SpawnAction } from "./Actions";
+import { Block } from "./Block";
 import { debug } from "./helpers";
 import {
+  dangerousOpponentRobots,
   myBlocks,
   myMatter,
   myRobots,
@@ -12,10 +14,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  action() {
-    debug("RobotBuilder action");
-    const actions: Action[] = [];
-
+  computeNormalSpawn() {
     const blocksToSpawn = myBlocks.filter(
       (block) => block.canSpawn && block.island?.owner !== Owner.ME
     );
@@ -75,6 +74,30 @@ export class RobotBuilder {
         return interrestingBNeighbors - interrestingANeighbors;
       return a.units - b.units;
     });
+    return blocksToSpawn;
+  }
+
+  computeDefensiveSpawn() {
+    const blocksToSpawn: Block[] = [];
+
+    for (const robot of dangerousOpponentRobots) {
+      for (const neighbor of robot.neighbors.filter(
+        (block) => block.canSpawn
+      )) {
+        blocksToSpawn.push(neighbor);
+      }
+    }
+
+    return blocksToSpawn;
+  }
+
+  action() {
+    debug("RobotBuilder action");
+    const actions: Action[] = [];
+
+    const blocksToSpawn = !dangerousOpponentRobots.length
+      ? this.computeNormalSpawn()
+      : this.computeDefensiveSpawn();
 
     let blockToSpawnIndex = 0;
     let predictedMatter = myMatter;

@@ -3,6 +3,7 @@ import { BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
 import {
+  dangerousOpponentRobots,
   height,
   map,
   myBlocks,
@@ -70,6 +71,7 @@ export class RecyclerBuilder {
         this.computeTotalGain(block) > 20 &&
         block.island?.owner !== Owner.ME &&
         !this.isAhead()
+      // !dangerousOpponentRobots.length
     );
     if (possibleRecyclers.length) {
       const recycler = possibleRecyclers[0];

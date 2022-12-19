@@ -13,14 +13,20 @@ export class RobotManager {
     const targets: Block[] = [];
 
     for (const robot of myRobots) {
-      const nearestEmptyBlocks = notMyBlocks.sort((a, b) => {
-        const distanceA = robot.distanceToBlock(a);
-        const distanceB = robot.distanceToBlock(b);
-        if (distanceA === distanceB && a.owner === b.owner)
-          return side * (b.position.x - a.position.x);
-        if (distanceA === distanceB) return b.owner - a.owner;
-        return distanceA - distanceB;
-      });
+      const nearestEmptyBlocks = notMyBlocks
+        .sort((a, b) => {
+          const distanceA = robot.distanceToBlock(a);
+          const distanceB = robot.distanceToBlock(b);
+          if (distanceA === distanceB && a.owner === b.owner)
+            return side * (b.position.x - a.position.x);
+          if (distanceA === distanceB) return b.owner - a.owner;
+          return distanceA - distanceB;
+        })
+        .filter((block) => {
+          const { willBecomeGrass } = block;
+          if (willBecomeGrass === Infinity) return true;
+          return willBecomeGrass > robot.distanceToBlock(block);
+        });
       let i = 0;
       while (
         i < nearestEmptyBlocks.length &&
