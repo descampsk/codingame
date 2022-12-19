@@ -16,7 +16,9 @@ export class RobotBuilder {
     debug("RobotBuilder action");
     const actions: Action[] = [];
 
-    const blocksToSpawn = myBlocks.filter((block) => block.canSpawn);
+    const blocksToSpawn = myBlocks.filter(
+      (block) => block.canSpawn && block.island?.owner !== Owner.ME
+    );
     blocksToSpawn.sort((a, b) => {
       let minAToEmpty = Infinity;
       let minBToEmpty = Infinity;
