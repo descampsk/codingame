@@ -2,6 +2,7 @@
 import { BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
+import { Island } from "./Island";
 import {
   dangerousOpponentRobots,
   height,
@@ -74,10 +75,28 @@ export class RecyclerBuilder {
       // !dangerousOpponentRobots.length
     );
     if (possibleRecyclers.length) {
-      const recycler = possibleRecyclers[0];
-      actions.push(new BuildAction(recycler.position.x, recycler.position.y));
-      myRecyclers.push(recycler);
-      setMyMatter(myMatter - 10);
+      let createBadIsland = false;
+      let recycler = possibleRecyclers[0];
+      do {
+        createBadIsland = false;
+        recycler.recycler = true;
+        for (const neighbor of recycler.neighbors) {
+          const island = Island.createIsland(neighbor);
+          if (island.owner === Owner.NONE) {
+            debug("island: ", neighbor.position, island.owner, island.size);
+            createBadIsland = true;
+            break;
+          }
+        }
+        recycler.recycler = false;
+        recycler = possibleRecyclers.shift() as Block;
+      } while (possibleRecyclers.length && createBadIsland === true);
+
+      if (recycler) {
+        actions.push(new BuildAction(recycler.position.x, recycler.position.y));
+        myRecyclers.push(recycler);
+        setMyMatter(myMatter - 10);
+      }
     }
     return actions;
   }

@@ -15,14 +15,33 @@ export class Island {
   }
 
   public get owner(): Owner {
-    const hasMineBlock =
-      this.blocks.findIndex((block) => block.owner === Owner.ME) >= 0;
-    const hasOpponentBlock =
-      this.blocks.findIndex((block) => block.owner === Owner.OPPONENT) >= 0;
-    if (hasMineBlock && hasOpponentBlock) return Owner.NONE;
-    if (hasMineBlock) return Owner.ME;
-    if (hasOpponentBlock) return Owner.OPPONENT;
+    const hasMineRobot =
+      this.blocks.findIndex(
+        (block) => block.owner === Owner.ME && block.units > 0
+      ) >= 0;
+    const hasOpponentRobot =
+      this.blocks.findIndex(
+        (block) => block.owner === Owner.OPPONENT && block.units > 0
+      ) >= 0;
+    if (hasMineRobot && hasOpponentRobot) return Owner.BOTH;
+    if (hasMineRobot) return Owner.ME;
+    if (hasOpponentRobot) return Owner.OPPONENT;
     return Owner.NONE;
+  }
+
+  static createIsland(start: Block) {
+    const island = new Island();
+    const nextBlocks = [start];
+    while (nextBlocks.length) {
+      const nextBlock = nextBlocks.pop()!;
+      island.blocks.push(nextBlock);
+      nextBlock.island = island;
+      const neighbors = nextBlock.neighbors.filter(
+        (neighbor) => !neighbor.island
+      );
+      if (neighbors.length) nextBlocks.push(...neighbors);
+    }
+    return island;
   }
 
   static findIslands() {
@@ -31,17 +50,7 @@ export class Island {
     );
     const islands: Island[] = [];
     while (blockWithoutIsland) {
-      const island = new Island();
-      const nextBlocks = [blockWithoutIsland];
-      while (nextBlocks.length) {
-        const nextBlock = nextBlocks.pop()!;
-        island.blocks.push(nextBlock);
-        nextBlock.island = island;
-        const neighbors = nextBlock.neighbors.filter(
-          (neighbor) => !neighbor.island
-        );
-        if (neighbors.length) nextBlocks.push(...neighbors);
-      }
+      const island = Island.createIsland(blockWithoutIsland);
       islands.push(island);
       blockWithoutIsland = blocks.find(
         (block) => !block.island && block.canMove

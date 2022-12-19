@@ -23,6 +23,7 @@ export enum Side {
 }
 
 export enum Owner {
+  BOTH = -2,
   NONE = -1,
   ME = 1,
   OPPONENT = 0,
