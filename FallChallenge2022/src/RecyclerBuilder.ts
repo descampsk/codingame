@@ -16,6 +16,7 @@ import {
   opponentRobots,
   Owner,
   setMyMatter,
+  turn,
   width,
 } from "./State";
 
@@ -80,24 +81,8 @@ export class RecyclerBuilder {
         return a.neighbors.length - b.neighbors.length;
       });
     if (possibleRecyclers.length) {
-      let createBadIsland = false;
-      let recycler = possibleRecyclers[0];
-      do {
-        createBadIsland = false;
-        recycler.recycler = true;
-        for (const neighbor of recycler.neighbors) {
-          const island = Island.createIsland(neighbor);
-          if (island.owner === Owner.NONE) {
-            debug("island: ", neighbor.position, island.owner, island.size);
-            createBadIsland = true;
-            break;
-          }
-        }
-        recycler.recycler = false;
-        recycler = possibleRecyclers.shift() as Block;
-      } while (possibleRecyclers.length && createBadIsland === true);
-
-      if (recycler) {
+      const recycler = possibleRecyclers[0];
+      if (recycler && turn % 2 === 0) {
         actions.push(new BuildAction(recycler.position.x, recycler.position.y));
         myRecyclers.push(recycler);
         setMyMatter(myMatter - 10);

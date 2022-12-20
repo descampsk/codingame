@@ -13,24 +13,25 @@ export class RobotManager {
     const targets: Block[] = [];
 
     // UpRobot va aller tout en haut et downRobot tout en bas jusqu'à ce qu'on ait au moins une case sur toutes les lignes
-    if (!map[0].find((block) => block.owner === Owner.ME)) {
-      const upRobot = myRobots.sort((a, b) => {
-        if (a.position.y !== b.position.y) return a.position.y - b.position.y;
-        return side * (b.position.x - a.position.x);
-      })[0];
-      const { x, y } = upRobot.position;
-      targets.push(map[y - 1][x]);
-      actions.push(new MoveAction(1, x, y, x, y - 1));
-    }
-    if (!map[height - 1].find((block) => block.owner === Owner.ME)) {
-      const downRobot = myRobots.sort((a, b) => {
-        if (a.position.y !== b.position.y) return b.position.y - a.position.y;
-        return side * (b.position.x - a.position.x);
-      })[0];
-      const { x, y } = downRobot.position;
-      targets.push(map[y + 1][x]);
-      actions.push(new MoveAction(1, x, y, x, y + 1));
-    }
+    // To improve
+    // if (!map[0].find((block) => block.owner === Owner.ME)) {
+    //   const upRobot = myRobots.sort((a, b) => {
+    //     if (a.position.y !== b.position.y) return a.position.y - b.position.y;
+    //     return side * (b.position.x - a.position.x);
+    //   })[0];
+    //   const { x, y } = upRobot.position;
+    //   targets.push(map[y - 1][x]);
+    //   actions.push(new MoveAction(1, x, y, x, y - 1));
+    // }
+    // if (!map[height - 1].find((block) => block.owner === Owner.ME)) {
+    //   const downRobot = myRobots.sort((a, b) => {
+    //     if (a.position.y !== b.position.y) return b.position.y - a.position.y;
+    //     return side * (b.position.x - a.position.x);
+    //   })[0];
+    //   const { x, y } = downRobot.position;
+    //   targets.push(map[y + 1][x]);
+    //   actions.push(new MoveAction(1, x, y, x, y + 1));
+    // }
 
     for (const robot of myRobots) {
       const nearestEmptyBlocks = notMyBlocks

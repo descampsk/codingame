@@ -69,3 +69,12 @@ export class SpawnAction implements Action {
 export type WaitAction = {
   wait: boolean;
 };
+
+export class MessageAction implements Action {
+  // eslint-disable-next-line no-useless-constructor
+  constructor(public message: string) {}
+
+  output() {
+    return `MESSAGE ${this.message}`;
+  }
+}

@@ -6,11 +6,9 @@ import {
   dangerousOpponentRobots,
   myBlocks,
   myMatter,
-  myRobots,
   notMyBlocks,
   opponentRobots,
   Owner,
-  side,
 } from "./State";
 
 export class RobotBuilder {

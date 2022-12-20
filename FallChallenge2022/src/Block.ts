@@ -11,8 +11,6 @@ export class Block {
   // eslint-disable-next-line no-use-before-define
   public neighbors: Block[] = [];
 
-  public isGrassInXTurn = 0;
-
   constructor(
     public position: Point,
     public scrapAmount: number,

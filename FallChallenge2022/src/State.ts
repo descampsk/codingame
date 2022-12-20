@@ -66,7 +66,6 @@ export const getMap = () => {
 };
 
 export const readInputs = () => {
-  const readInputsStart = new Date();
   const matters = readline().split(" ");
   myMatter = parseInt(matters[0]);
   oppMatter = parseInt(matters[1]);
@@ -91,13 +90,9 @@ export const readInputs = () => {
       });
     }
   }
-
-  const endReadInputs = new Date().getTime() - readInputsStart.getTime();
-  debug("ReadInputs time: %dms", endReadInputs);
 };
 
 const computeData = () => {
-  const computeDataStart = new Date();
   blocks = map.flat();
   myBlocks = [];
   notMyBlocks = [];
@@ -126,15 +121,11 @@ const computeData = () => {
 
   if (side === Side.UNKNOWN)
     side = myRobots[0].position.x < width / 2 ? Side.LEFT : Side.RIGHT;
-
-  const computeDataEnd = new Date().getTime() - computeDataStart.getTime();
-  debug("computeData time: %dms", computeDataEnd);
 };
 
 const computeDjikstraMap = () => {
-  const computeDjikstraMapStart = new Date();
   const usefullBlocks = blocks.filter(
-    (block) => block.canMove && block.owner === Owner.ME
+    (block) => block.canMove && block.owner !== Owner.NONE
   );
   usefullBlocks.forEach((block) => {
     // eslint-disable-next-line no-param-reassign
@@ -144,9 +135,6 @@ const computeDjikstraMap = () => {
       block.position.x
     );
   });
-  const computeDjikstraMapEnd =
-    new Date().getTime() - computeDjikstraMapStart.getTime();
-  debug("computeDjikstraMap time: %dms", computeDjikstraMapEnd);
 };
 
 export const refresh = () => {
@@ -159,14 +147,4 @@ export const refresh = () => {
   computeDjikstraMap();
 
   islands = Island.findIslands();
-  //   debug(
-  //     "islands:",
-  //     islands.length,
-  //     islands.map((island) => island.blocks[0].position)
-  //   );
-
-  debug(
-    "dangerousOpponentRobots",
-    dangerousOpponentRobots.map((robot) => robot.position)
-  );
 };
