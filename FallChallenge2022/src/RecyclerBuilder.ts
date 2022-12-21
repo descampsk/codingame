@@ -1,5 +1,5 @@
 /* eslint-disable class-methods-use-this */
-import { BuildAction } from "./Actions";
+import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
 import { Island } from "./Island";
@@ -63,7 +63,7 @@ export class RecyclerBuilder {
     return total;
   }
 
-  action() {
+  buildNaiveRecycler() {
     const actions: BuildAction[] = [];
     const possibleRecyclers = myBlocks
       .filter(
@@ -88,6 +88,35 @@ export class RecyclerBuilder {
       }
     }
     return actions;
+  }
+
+  buildDefensive() {
+    const actions: Action[] = [];
+    const possibleRecyclers = myBlocks.filter((block) => block.canBuild);
+    for (const block of possibleRecyclers) {
+      for (const robot of opponentRobots) {
+        if (
+          ((Math.abs(robot.x - block.x) === 1 && robot.y === block.y) ||
+            (Math.abs(robot.y - block.y) === 1 && robot.x === block.x)) &&
+          myMatter >= 10
+        ) {
+          actions.push(new BuildAction(block.x, block.y));
+          myRecyclers.push(block);
+          setMyMatter(myMatter - 10);
+          break;
+        }
+      }
+    }
+    return actions;
+  }
+
+  action() {
+    // const defensiveActions = this.buildDefensive();
+    // if (defensiveActions.length) {
+    //   debug("defensiveBuild: ", defensiveActions.length);
+    //   return defensiveActions;
+    // }
+    return this.buildNaiveRecycler();
   }
 }
 
