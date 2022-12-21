@@ -14,18 +14,25 @@ export class Island {
     return this.blocks.length;
   }
 
+  public get hasRobot(): boolean {
+    for (const block of this.blocks) {
+      if (block.units > 0) return true;
+    }
+    return false;
+  }
+
   public get owner(): Owner {
-    const hasMineRobot =
+    const hasMineBlock =
       this.blocks.findIndex(
-        (block) => block.owner === Owner.ME && block.units > 0
+        (block) => block.owner === Owner.ME && block.canSpawn
       ) >= 0;
-    const hasOpponentRobot =
+    const hasOpponentBlock =
       this.blocks.findIndex(
         (block) => block.owner === Owner.OPPONENT && block.units > 0
       ) >= 0;
-    if (hasMineRobot && hasOpponentRobot) return Owner.BOTH;
-    if (hasMineRobot) return Owner.ME;
-    if (hasOpponentRobot) return Owner.OPPONENT;
+    if (hasMineBlock && hasOpponentBlock) return Owner.BOTH;
+    if (hasMineBlock) return Owner.ME;
+    if (hasOpponentBlock) return Owner.OPPONENT;
     return Owner.NONE;
   }
 

@@ -44,15 +44,15 @@ export class RecyclerBuilder {
     let total = scrapAmount;
     for (const nearCoordinate of nearCoordinates) {
       const [x, y] = nearCoordinate;
-      const nearBlockX = block.position.x + x;
-      const nearBlockY = block.position.y + y;
+      const nearBlockX = block.x + x;
+      const nearBlockY = block.y + y;
       if (
         nearBlockX >= 0 &&
         nearBlockX < width &&
         nearBlockY >= 0 &&
         nearBlockY < height
       ) {
-        const nearBlock = map[block.position.y + y][block.position.x + x];
+        const nearBlock = map[block.y + y][block.x + x];
         total +=
           nearBlock.scrapAmount > scrapAmount
             ? scrapAmount
@@ -65,7 +65,6 @@ export class RecyclerBuilder {
 
   action() {
     const actions: BuildAction[] = [];
-    debug("RecyclerBuilder action");
     const possibleRecyclers = myBlocks
       .filter(
         (block) =>
@@ -83,7 +82,7 @@ export class RecyclerBuilder {
     if (possibleRecyclers.length) {
       const recycler = possibleRecyclers[0];
       if (recycler && turn % 2 === 0) {
-        actions.push(new BuildAction(recycler.position.x, recycler.position.y));
+        actions.push(new BuildAction(recycler.x, recycler.y));
         myRecyclers.push(recycler);
         setMyMatter(myMatter - 10);
       }

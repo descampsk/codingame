@@ -74,16 +74,6 @@ export class IA {
     const opponentPredictedScore =
       opponentSecuredScore + opponentContestedScore - opponentUselessScore;
 
-    debug(
-      "Predictions: ",
-      mySecureScored,
-      opponentSecuredScore,
-      myContestedScore,
-      opponentContestedScore,
-      myUselessScore,
-      opponentUselessScore
-    );
-
     return {
       myPredictedScore,
       opponentPredictedScore,
@@ -121,8 +111,6 @@ export class IA {
       opponentSecuredScore - opponentUselessScore;
 
     const advantage = myRealSecuredScore - opponentRealSecuredScore;
-    debug("Advantage", advantage);
-    debug("contested", myContestedScore, opponentContestedScore);
     if (advantage > 0) {
       winRatio = Math.round(
         ((advantage + myContestedScore) * 100) /

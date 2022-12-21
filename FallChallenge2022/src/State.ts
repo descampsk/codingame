@@ -1,8 +1,8 @@
-import { Point } from "@mathigon/euclid";
 import { Block } from "./Block";
 import { dijtstraAlgorithm } from "./djikstra";
 import { debug } from "./helpers";
 import { Island } from "./Island";
+import { findSymmetryAxis } from "./symetrie";
 
 export let turn = 0;
 
@@ -58,7 +58,7 @@ export const getMap = () => {
     const blocks: Block[] = [];
     for (let j = 0; j < width; j++) {
       blocks.push(
-        new Block(new Point(j, i), 0, Owner.NONE, 0, false, false, false, false)
+        new Block(j, i, 0, Owner.NONE, 0, false, false, false, false)
       );
     }
     map.push(blocks);
@@ -110,7 +110,9 @@ const computeData = () => {
     if (block.owner !== Owner.ME && block.canMove) notMyBlocks.push(block);
     if (block.owner === Owner.OPPONENT) opponentBlocks.push(block);
     if (block.owner === Owner.NONE) emptyBlocks.push(block);
-    if (block.owner === Owner.ME && block.units) myRobots.push(block);
+    if (block.owner === Owner.ME && block.units) {
+      for (let i = 0; i < block.units; i++) myRobots.push(block);
+    }
     if (block.owner === Owner.OPPONENT && block.units)
       opponentRobots.push(block);
     if (block.owner === Owner.ME && block.recycler) myRecyclers.push(block);
@@ -120,7 +122,7 @@ const computeData = () => {
   });
 
   if (side === Side.UNKNOWN)
-    side = myRobots[0].position.x < width / 2 ? Side.LEFT : Side.RIGHT;
+    side = myRobots[0].x < width / 2 ? Side.LEFT : Side.RIGHT;
 };
 
 const computeDjikstraMap = () => {
@@ -129,22 +131,21 @@ const computeDjikstraMap = () => {
   );
   usefullBlocks.forEach((block) => {
     // eslint-disable-next-line no-param-reassign
-    block.djikstraMap = dijtstraAlgorithm(
-      map,
-      block.position.y,
-      block.position.x
-    );
+    block.djikstraMap = dijtstraAlgorithm(map, block.y, block.x);
   });
 };
 
 export const refresh = () => {
   turn += 1;
   readInputs();
-  debug(`############# Turn ${turn} #############`);
 
   computeData();
 
   computeDjikstraMap();
 
+  //   const symetrie = findSymmetryAxis(map, "central");
+  //   console.log(symetrie);
+
   islands = Island.findIslands();
+  //   debug("Island:", map[0][11].island);
 };

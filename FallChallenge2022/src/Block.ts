@@ -11,8 +11,11 @@ export class Block {
   // eslint-disable-next-line no-use-before-define
   public neighbors: Block[] = [];
 
+  public hasMoved = false;
+
   constructor(
-    public position: Point,
+    public x: number,
+    public y: number,
     public scrapAmount: number,
     public owner: Owner,
     public units: number,
@@ -21,6 +24,10 @@ export class Block {
     public canSpawn: boolean,
     public inRangeOfRecycler: boolean
   ) {}
+
+  equals(block: Block) {
+    return this.x === block.x && this.y === block.y;
+  }
 
   public get canMove(): boolean {
     return !this.recycler && this.scrapAmount > 0;
@@ -33,7 +40,7 @@ export class Block {
   public get willBecomeGrass(): number {
     let grassInXTurn = this.scrapAmount;
     let totalRecycler = 0;
-    const { x, y } = this.position;
+    const { x, y } = this;
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
         if (x + j > 0 && y + i >= 0 && x + j < width && y + i < height) {
@@ -54,7 +61,7 @@ export class Block {
   public get isDangerousRobotOpponent(): boolean {
     if (this.owner !== Owner.OPPONENT || this.units === 0) return false;
 
-    const { x, y } = this.position;
+    const { x, y } = this;
     let ownerBlockDifference = 0;
     for (let i = -2; i <= 2; i++) {
       for (let j = -2; j <= 2; j++) {
@@ -71,7 +78,7 @@ export class Block {
 
   updateNeighbors() {
     this.neighbors = [];
-    const { x, y } = this.position;
+    const { x, y } = this;
     if (x > 0 && map[y][x - 1].canMove) this.neighbors.push(map[y][x - 1]);
     if (x < map[0].length - 1 && map[y][x + 1].canMove)
       this.neighbors.push(map[y][x + 1]);
@@ -108,7 +115,7 @@ export class Block {
   }
 
   distanceToBlock(block: Block) {
-    const { x, y } = block.position;
+    const { x, y } = block;
     return this.djikstraMap[y][x];
   }
 }

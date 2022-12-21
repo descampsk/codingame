@@ -14,7 +14,9 @@ import {
 export class RobotBuilder {
   computeNormalSpawn() {
     const blocksToSpawn = myBlocks.filter(
-      (block) => block.canSpawn && block.island?.owner !== Owner.ME
+      (block) =>
+        block.canSpawn &&
+        (block.island?.owner !== Owner.ME || !block.island?.hasRobot)
     );
     blocksToSpawn.sort((a, b) => {
       let minAToEmpty = Infinity;
@@ -90,7 +92,6 @@ export class RobotBuilder {
   }
 
   action() {
-    debug("RobotBuilder action");
     const actions: Action[] = [];
 
     const blocksToSpawn = !dangerousOpponentRobots.length
@@ -101,9 +102,7 @@ export class RobotBuilder {
     let predictedMatter = myMatter;
     while (predictedMatter >= 10 && blockToSpawnIndex < blocksToSpawn.length) {
       const blockToSpawn = blocksToSpawn[blockToSpawnIndex];
-      actions.push(
-        new SpawnAction(1, blockToSpawn.position.x, blockToSpawn.position.y)
-      );
+      actions.push(new SpawnAction(1, blockToSpawn.x, blockToSpawn.y));
       blockToSpawnIndex += 1;
       predictedMatter -= 10;
     }
