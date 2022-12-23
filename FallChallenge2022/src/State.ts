@@ -1,5 +1,4 @@
 import { Block } from "./Block";
-import { dijtstraAlgorithm } from "./djikstra";
 import { debug } from "./helpers";
 import { Island } from "./Island";
 import { findSymmetryAxis } from "./symetrie";
@@ -125,23 +124,11 @@ const computeData = () => {
     side = myRobots[0].x < width / 2 ? Side.LEFT : Side.RIGHT;
 };
 
-const computeDjikstraMap = () => {
-  const usefullBlocks = blocks.filter(
-    (block) => block.canMove && block.owner !== Owner.NONE
-  );
-  usefullBlocks.forEach((block) => {
-    // eslint-disable-next-line no-param-reassign
-    block.djikstraMap = dijtstraAlgorithm(map, block.y, block.x);
-  });
-};
-
 export const refresh = () => {
   turn += 1;
   readInputs();
 
   computeData();
-
-  computeDjikstraMap();
 
   //   const symetrie = findSymmetryAxis(map, "central");
   //   console.log(symetrie);

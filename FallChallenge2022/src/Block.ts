@@ -1,5 +1,6 @@
 /* eslint-disable no-useless-constructor */
-import { Point } from "@mathigon/euclid";
+import { dijtstraAlgorithm } from "./djikstra";
+import { debug } from "./helpers";
 import { Island } from "./Island";
 import { height, map, Owner, width } from "./State";
 
@@ -10,6 +11,9 @@ export class Block {
 
   // eslint-disable-next-line no-use-before-define
   public neighbors: Block[] = [];
+
+  // eslint-disable-next-line no-use-before-define
+  public neighborsWithRecycler: Block[] = [];
 
   public hasMoved = false;
 
@@ -78,13 +82,29 @@ export class Block {
 
   updateNeighbors() {
     this.neighbors = [];
+    this.neighborsWithRecycler = [];
     const { x, y } = this;
-    if (x > 0 && map[y][x - 1].canMove) this.neighbors.push(map[y][x - 1]);
-    if (x < map[0].length - 1 && map[y][x + 1].canMove)
-      this.neighbors.push(map[y][x + 1]);
-    if (y > 0 && map[y - 1][x].canMove) this.neighbors.push(map[y - 1][x]);
-    if (y < map.length - 1 && map[y + 1][x].canMove)
-      this.neighbors.push(map[y + 1][x]);
+    if (x > 0) {
+      if (map[y][x - 1].canMove) this.neighbors.push(map[y][x - 1]);
+      if (map[y][x - 1].recycler)
+        this.neighborsWithRecycler.push(map[y][x - 1]);
+    }
+    if (x < map[0].length - 1) {
+      if (map[y][x + 1].canMove) this.neighbors.push(map[y][x + 1]);
+      if (map[y][x + 1].recycler)
+        this.neighborsWithRecycler.push(map[y][x + 1]);
+    }
+
+    if (y > 0) {
+      if (map[y - 1][x].canMove) this.neighbors.push(map[y - 1][x]);
+      if (map[y - 1][x].recycler) this.neighbors.push(map[y - 1][x]);
+    }
+
+    if (y < map.length - 1) {
+      if (map[y + 1][x].canMove) this.neighbors.push(map[y + 1][x]);
+      if (map[y + 1][x].recycler)
+        this.neighborsWithRecycler.push(map[y + 1][x]);
+    }
   }
 
   update({
@@ -112,10 +132,16 @@ export class Block {
     this.canSpawn = canSpawn;
     this.inRangeOfRecycler = inRangeOfRecycler;
     this.island = null;
+    this.djikstraMap = [];
   }
 
   distanceToBlock(block: Block) {
+    if (!block) return Infinity;
     const { x, y } = block;
+
+    if (!this.djikstraMap.length) {
+      this.djikstraMap = dijtstraAlgorithm(map, this.y, this.x);
+    }
     return this.djikstraMap[y][x];
   }
 }

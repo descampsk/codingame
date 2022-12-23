@@ -4,14 +4,36 @@ import { Block } from "./Block";
 import { debug } from "./helpers";
 import {
   dangerousOpponentRobots,
+  emptyBlocks,
   myBlocks,
   myMatter,
   notMyBlocks,
   opponentRobots,
   Owner,
+  turn,
+  width,
 } from "./State";
 
 export class RobotBuilder {
+  computeExpensionSpawn() {
+    const expensionRadius = 5;
+    const possibleSpawns = myBlocks.filter(
+      (block) => block.canSpawn && block.canMove
+    );
+    possibleSpawns.sort((a, b) => {
+      const blocksAToExpand = emptyBlocks.filter(
+        (block) => a.distanceToBlock(block) <= expensionRadius
+      );
+      const blocksBToExpand = emptyBlocks.filter(
+        (block) => b.distanceToBlock(block) <= expensionRadius
+      );
+
+      return blocksBToExpand.length - blocksAToExpand.length;
+    });
+    debug("ExpensionSpawn:", possibleSpawns.length);
+    return possibleSpawns;
+  }
+
   computeNormalSpawn() {
     const blocksToSpawn = myBlocks.filter(
       (block) =>
@@ -94,9 +116,12 @@ export class RobotBuilder {
   action() {
     const actions: Action[] = [];
 
-    const blocksToSpawn = !dangerousOpponentRobots.length
-      ? this.computeNormalSpawn()
-      : this.computeDefensiveSpawn();
+    // Ordre de priorité
+    let blocksToSpawn: Block[] = [];
+    if (turn < width / 2 - 3) blocksToSpawn = this.computeExpensionSpawn();
+    else if (dangerousOpponentRobots.length)
+      blocksToSpawn = this.computeDefensiveSpawn();
+    else blocksToSpawn = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;
     let predictedMatter = myMatter;

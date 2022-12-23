@@ -38,7 +38,7 @@ export class RecyclerBuilder {
     );
   }
 
-  computeTotalGain(block: Block) {
+  computeGains(block: Block) {
     const nearCoordinates = [[-1, 0], [1, 0], [0, 1], [0 - 1]];
     const { scrapAmount } = block;
     let total = scrapAmount;
@@ -60,7 +60,10 @@ export class RecyclerBuilder {
       }
     }
     // debug("computeTotalGain", total, block.position);
-    return total;
+    return {
+      gains: total,
+      gainsPerTurn: total / scrapAmount,
+    };
   }
 
   buildNaiveRecycler() {
@@ -70,18 +73,25 @@ export class RecyclerBuilder {
         (block) =>
           block.canBuild &&
           !this.isNearOfARecycler(block) &&
-          this.computeTotalGain(block) > 20 &&
+          this.computeGains(block).gains > 20 &&
           block.island?.owner !== Owner.ME
       )
       .sort((a, b) => {
-        const gainA = this.computeTotalGain(a);
-        const gainB = this.computeTotalGain(b);
-        if (gainA !== gainB) return gainB - gainA;
-        return a.neighbors.length - b.neighbors.length;
+        const { gains: gainA, gainsPerTurn: gainsPerTurnA } =
+          this.computeGains(a);
+        const { gains: gainB, gainsPerTurn: gainsPerTurnB } =
+          this.computeGains(b);
+        if (gainsPerTurnA !== gainsPerTurnB)
+          return gainsPerTurnB - gainsPerTurnA;
+        return gainB - gainA;
       });
     if (possibleRecyclers.length) {
       const recycler = possibleRecyclers[0];
-      if (recycler && turn % 2 === 0) {
+      if (
+        recycler &&
+        turn % 2 === 0 &&
+        (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5)
+      ) {
         actions.push(new BuildAction(recycler.x, recycler.y));
         myRecyclers.push(recycler);
         setMyMatter(myMatter - 10);

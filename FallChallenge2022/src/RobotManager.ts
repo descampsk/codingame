@@ -83,17 +83,19 @@ export class RobotManager {
           ? nearestEmptyBlocks[i]
           : nearestEmptyBlocks[0];
 
-      if (robot.distanceToBlock(nearestEmptyBlock) === 1)
-        targets.push(nearestEmptyBlock);
-      actions.push(
-        new MoveAction(
-          1,
-          robot.x,
-          robot.y,
-          nearestEmptyBlock.x,
-          nearestEmptyBlock.y
-        )
-      );
+      if (nearestEmptyBlock) {
+        if (robot.distanceToBlock(nearestEmptyBlock) === 1)
+          targets.push(nearestEmptyBlock);
+        actions.push(
+          new MoveAction(
+            1,
+            robot.x,
+            robot.y,
+            nearestEmptyBlock.x,
+            nearestEmptyBlock.y
+          )
+        );
+      }
     }
     return actions;
   }
