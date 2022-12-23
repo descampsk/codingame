@@ -3,7 +3,7 @@ import { debug } from "./helpers";
 import { Island } from "./Island";
 import { findSymmetryAxis } from "./symetrie";
 
-export const debugTime = true;
+export const debugTime = false;
 
 export let turn = 0;
 

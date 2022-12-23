@@ -159,7 +159,7 @@ export class Block {
     for (let i = 0; i < notMyBlocks.length; i++) {
       const block = notMyBlocks[i];
       if (computeManhattanDistance(block, this) <= radius) {
-        if (block.owner === Owner.OPPONENT) this.potentiel += 2;
+        if (block.owner === Owner.OPPONENT) this.potentiel += 1.5;
         else this.potentiel += 1;
       }
     }

@@ -49,7 +49,8 @@ export class RobotBuilder {
       (block) =>
         block.canSpawn &&
         block.canMove &&
-        block.neighbors.find((a) => a.owner !== Owner.ME)
+        block.neighbors.find((a) => a.owner !== Owner.ME) &&
+        block.units < 2
     );
     possibleSpawns.sort((a, b) => {
       const blocksAToExpand = emptyBlocks.filter(
@@ -166,16 +167,17 @@ export class RobotBuilder {
     // if (dangerousOpponentRobots.length)
     //   blocksToSpawn = this.computeDefensiveSpawn();
     // else
-    if (!this.checkExtensionDone())
-      blocksToSpawn = this.computeExpensionSpawn();
-    else blocksToSpawn = this.computeNormalSpawn();
+    // if (!this.checkExtensionDone())
+    //   blocksToSpawn = this.computeExpensionSpawn();
+    blocksToSpawn = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;
     let predictedMatter = myMatter;
-    while (predictedMatter >= 10 && blockToSpawnIndex < blocksToSpawn.length) {
+    while (predictedMatter >= 10 && blocksToSpawn[blockToSpawnIndex]) {
       const blockToSpawn = blocksToSpawn[blockToSpawnIndex];
       actions.push(new SpawnAction(1, blockToSpawn.x, blockToSpawn.y));
       blockToSpawnIndex += 1;
+      if (blockToSpawnIndex === blocksToSpawn.length) blockToSpawnIndex = 0;
       predictedMatter -= 10;
     }
 
