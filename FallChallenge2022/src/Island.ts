@@ -3,7 +3,7 @@
 /* eslint-disable no-useless-constructor */
 import { Block } from "./Block";
 import { debug } from "./helpers";
-import { blocks, Owner } from "./State";
+import { blocks, debugTime, Owner } from "./State";
 
 export class Island {
   public blocks: Block[] = [];
@@ -52,6 +52,8 @@ export class Island {
   }
 
   static findIslands() {
+    const start = new Date();
+
     let blockWithoutIsland = blocks.find(
       (block) => !block.island && block.canMove
     );
@@ -63,6 +65,8 @@ export class Island {
         (block) => !block.island && block.canMove
       );
     }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) debug("findIslands time: %dms", end);
     return islands;
   }
 }

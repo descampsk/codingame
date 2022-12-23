@@ -1,11 +1,14 @@
 import type { Block } from "./Block";
 import { debug } from "./helpers";
+import { debugTime } from "./State";
 
 export const dijtstraAlgorithm = (
   map: Block[][],
   startX: number,
   startY: number
 ) => {
+  const start = new Date();
+
   const distances: number[][] = new Array(map.length)
     .fill(Infinity)
     .map(() => new Array(map[0].length).fill(Infinity));
@@ -48,5 +51,7 @@ export const dijtstraAlgorithm = (
     [currentBlock] = nextBlocks;
     nextBlocks.shift();
   }
+  const end = new Date().getTime() - start.getTime();
+  if (debugTime) debug("dijtstraAlgorithm time: %dms", end);
   return distances;
 };

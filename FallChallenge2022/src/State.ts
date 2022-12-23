@@ -3,6 +3,8 @@ import { debug } from "./helpers";
 import { Island } from "./Island";
 import { findSymmetryAxis } from "./symetrie";
 
+export const debugTime = true;
+
 export let turn = 0;
 
 export let width = 0;
@@ -65,6 +67,7 @@ export const getMap = () => {
 };
 
 export const readInputs = () => {
+  const start = new Date();
   const matters = readline().split(" ");
   myMatter = parseInt(matters[0]);
   oppMatter = parseInt(matters[1]);
@@ -89,9 +92,12 @@ export const readInputs = () => {
       });
     }
   }
+  const end = new Date().getTime() - start.getTime();
+  if (debugTime) debug("readInputs time: %dms", end);
 };
 
 const computeData = () => {
+  const start = new Date();
   blocks = map.flat();
   myBlocks = [];
   notMyBlocks = [];
@@ -122,6 +128,9 @@ const computeData = () => {
 
   if (side === Side.UNKNOWN)
     side = myRobots[0].x < width / 2 ? Side.LEFT : Side.RIGHT;
+
+  const end = new Date().getTime() - start.getTime();
+  if (debugTime) debug("computeData time: %dms", end);
 };
 
 export const refresh = () => {
@@ -133,6 +142,12 @@ export const refresh = () => {
   //   const symetrie = findSymmetryAxis(map, "central");
   //   console.log(symetrie);
 
+  //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
+
+  //   debug("Block:", map[6][5].neighbors);
+
   islands = Island.findIslands();
-  //   debug("Island:", map[0][11].island);
+  //   debug("Island:", islands.length);
+  //   debug("Block:", map[4][4].neighbors);
+  //   debug("Island:", map[1][6].neighbors);
 };

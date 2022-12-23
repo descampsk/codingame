@@ -1,51 +1,28 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-loop-func */
 /* eslint-disable class-methods-use-this */
-import { Action, MoveAction, SpawnAction } from "./Actions";
+import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
 import { debug, minBy } from "./helpers";
 import {
-  height,
-  map,
   myRobots,
   notMyBlocks,
   Owner,
   side,
   width,
   blocks,
-  myMatter,
-  myBlocks,
-  setMyMatter,
+  debugTime,
 } from "./State";
 
 export class RobotManager {
   public robotsToMove: Block[] = [];
 
   naiveMethod() {
+    const start = new Date();
+
     debug("RobotManager - naive mode");
     const actions: Action[] = [];
     const targets: Block[] = [];
-
-    // UpRobot va aller tout en haut et downRobot tout en bas jusqu'à ce qu'on ait au moins une case sur toutes les lignes
-    // To improve
-    // if (!map[0].find((block) => block.owner === Owner.ME)) {
-    //   const upRobot = myRobots.sort((a, b) => {
-    //     if (a.position.y !== b.position.y) return a.position.y - b.position.y;
-    //     return side * (b.position.x - a.position.x);
-    //   })[0];
-    //   const { x, y } = upRobot.position;
-    //   targets.push(map[y - 1][x]);
-    //   actions.push(new MoveAction(1, x, y, x, y - 1));
-    // }
-    // if (!map[height - 1].find((block) => block.owner === Owner.ME)) {
-    //   const downRobot = myRobots.sort((a, b) => {
-    //     if (a.position.y !== b.position.y) return b.position.y - a.position.y;
-    //     return side * (b.position.x - a.position.x);
-    //   })[0];
-    //   const { x, y } = downRobot.position;
-    //   targets.push(map[y + 1][x]);
-    //   actions.push(new MoveAction(1, x, y, x, y + 1));
-    // }
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
       const nearestEmptyBlocks = notMyBlocks
@@ -53,12 +30,20 @@ export class RobotManager {
           const distanceA = robot.distanceToBlock(a);
           const distanceB = robot.distanceToBlock(b);
 
+          const potentielRadius = 5;
+          const potentielA = a.getPotentiel(potentielRadius);
+          const potentielB = b.getPotentiel(potentielRadius);
+
           // Ordre de priorité
           // - block le plus proche
+          // - si case ennemie, on tue les robots en premier
           // - ennemie avant vide
+          // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
           if (distanceA !== distanceB) return distanceA - distanceB;
           if (a.owner !== b.owner) return b.owner - a.owner;
+          if (a.owner === Owner.OPPONENT) return b.units - a.units;
+          if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
         })
         .filter((block) => {
@@ -66,6 +51,7 @@ export class RobotManager {
           if (willBecomeGrass === Infinity) return true;
           return willBecomeGrass > robot.distanceToBlock(block);
         });
+
       let i = 0;
       while (
         i < nearestEmptyBlocks.length &&
@@ -84,8 +70,12 @@ export class RobotManager {
           : nearestEmptyBlocks[0];
 
       if (nearestEmptyBlock) {
-        if (robot.distanceToBlock(nearestEmptyBlock) === 1)
+        if (
+          robot.distanceToBlock(nearestEmptyBlock) === 1 &&
+          nearestEmptyBlock.owner === Owner.NONE
+        )
           targets.push(nearestEmptyBlock);
+
         actions.push(
           new MoveAction(
             1,
@@ -97,20 +87,10 @@ export class RobotManager {
         );
       }
     }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) debug("RobotManager naive method time: %dms", end);
     return actions;
   }
-
-  //   shouldExpand() {
-  //     const targetX = Math.floor(width / 2);
-  //     const targets = blocks.filter(
-  //       (block) =>
-  //         block.position.x === targetX &&
-  //         block.owner === Owner.NONE &&
-  //         block.canMove
-  //     );
-  //     debug("Expansion:", targets.length, height);
-  //     return targets.length > height / 3;
-  //   }
 
   expandMethod() {
     debug("RobotManager - expand mode");
@@ -138,17 +118,17 @@ export class RobotManager {
       }
     } while (targets.length && robotsToExtend.length);
 
-    while (targets.length && myMatter >= 10) {
-      const target = targets.pop()!;
-      const { min: nearestBlock } = minBy(myBlocks, (block) =>
-        block.distanceToBlock(target)
-      );
-      if (nearestBlock) {
-        const { x, y } = nearestBlock;
-        actions.push(new SpawnAction(1, x, y));
-        setMyMatter(myMatter - 10);
-      }
-    }
+    // while (targets.length && myMatter >= 10) {
+    //   const target = targets.pop()!;
+    //   const { min: nearestBlock } = minBy(myBlocks, (block) =>
+    //     block.distanceToBlock(target)
+    //   );
+    //   if (nearestBlock) {
+    //     const { x, y } = nearestBlock;
+    //     actions.push(new SpawnAction(1, x, y));
+    //     setMyMatter(myMatter - 10);
+    //   }
+    // }
 
     return actions;
   }

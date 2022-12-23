@@ -5,6 +5,7 @@ import { computeManhattanDistance, debug } from "./helpers";
 import { Island } from "./Island";
 import {
   dangerousOpponentRobots,
+  debugTime,
   height,
   map,
   myBlocks,
@@ -103,6 +104,8 @@ export class RecyclerBuilder {
   }
 
   buildDefensive() {
+    const start = new Date();
+
     const actions: Action[] = [];
     const possibleRecyclers = myBlocks.filter((block) => block.canBuild);
     for (const block of possibleRecyclers) {
@@ -120,6 +123,8 @@ export class RecyclerBuilder {
         }
       }
     }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) debug("buildDefensive time: %dms", end);
     return actions;
   }
 

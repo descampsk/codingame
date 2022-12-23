@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-constructor */
 import { dijtstraAlgorithm } from "./djikstra";
-import { debug } from "./helpers";
+import { computeManhattanDistance, debug } from "./helpers";
 import { Island } from "./Island";
-import { height, map, Owner, width } from "./State";
+import { height, map, notMyBlocks, Owner, width } from "./State";
 
 export class Block {
   public djikstraMap: number[][] = [];
@@ -16,6 +16,8 @@ export class Block {
   public neighborsWithRecycler: Block[] = [];
 
   public hasMoved = false;
+
+  private potentiel: number | null = null;
 
   constructor(
     public x: number,
@@ -42,24 +44,28 @@ export class Block {
   }
 
   public get willBecomeGrass(): number {
-    let grassInXTurn = this.scrapAmount;
     let totalRecycler = 0;
     const { x, y } = this;
     for (let i = -1; i <= 1; i++) {
       for (let j = -1; j <= 1; j++) {
-        if (x + j > 0 && y + i >= 0 && x + j < width && y + i < height) {
+        if (
+          x + j >= 0 &&
+          y + i >= 0 &&
+          x + j < width &&
+          y + i < height &&
+          Math.abs(i) !== Math.abs(j)
+        ) {
           const block = map[y + i][x + j];
           if (block.recycler) {
-            grassInXTurn -= block.scrapAmount;
             totalRecycler += 1;
           }
         }
       }
     }
 
-    return grassInXTurn > 0
+    return totalRecycler === 0
       ? Infinity
-      : Math.round(grassInXTurn / totalRecycler);
+      : Math.ceil(this.scrapAmount / totalRecycler);
   }
 
   public get isDangerousRobotOpponent(): boolean {
@@ -97,7 +103,8 @@ export class Block {
 
     if (y > 0) {
       if (map[y - 1][x].canMove) this.neighbors.push(map[y - 1][x]);
-      if (map[y - 1][x].recycler) this.neighbors.push(map[y - 1][x]);
+      if (map[y - 1][x].recycler)
+        this.neighborsWithRecycler.push(map[y - 1][x]);
     }
 
     if (y < map.length - 1) {
@@ -133,6 +140,7 @@ export class Block {
     this.inRangeOfRecycler = inRangeOfRecycler;
     this.island = null;
     this.djikstraMap = [];
+    this.potentiel = null;
   }
 
   distanceToBlock(block: Block) {
@@ -143,5 +151,18 @@ export class Block {
       this.djikstraMap = dijtstraAlgorithm(map, this.y, this.x);
     }
     return this.djikstraMap[y][x];
+  }
+
+  getPotentiel(radius: number) {
+    if (this.potentiel) return this.potentiel;
+    this.potentiel = 0;
+    for (let i = 0; i < notMyBlocks.length; i++) {
+      const block = notMyBlocks[i];
+      if (computeManhattanDistance(block, this) <= radius) {
+        if (block.owner === Owner.OPPONENT) this.potentiel += 2;
+        else this.potentiel += 1;
+      }
+    }
+    return this.potentiel;
   }
 }
