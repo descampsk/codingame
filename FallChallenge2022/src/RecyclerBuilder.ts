@@ -90,7 +90,9 @@ export class RecyclerBuilder {
       if (
         recycler &&
         turn % 2 === 0 &&
-        (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5)
+        (myRobots.length < 10 ||
+          myRobots.length <= opponentRobots.length + 5) &&
+        myMatter < 50
       ) {
         actions.push(new BuildAction(recycler.x, recycler.y));
         myRecyclers.push(recycler);
@@ -108,7 +110,8 @@ export class RecyclerBuilder {
         if (
           ((Math.abs(robot.x - block.x) === 1 && robot.y === block.y) ||
             (Math.abs(robot.y - block.y) === 1 && robot.x === block.x)) &&
-          myMatter >= 10
+          myMatter >= 10 &&
+          robot.units > 1
         ) {
           actions.push(new BuildAction(block.x, block.y));
           myRecyclers.push(block);
@@ -121,11 +124,11 @@ export class RecyclerBuilder {
   }
 
   action() {
-    // const defensiveActions = this.buildDefensive();
-    // if (defensiveActions.length) {
-    //   debug("defensiveBuild: ", defensiveActions.length);
-    //   return defensiveActions;
-    // }
+    const defensiveActions = this.buildDefensive();
+    if (defensiveActions.length) {
+      debug("defensiveBuild: ", defensiveActions.length);
+      return defensiveActions;
+    }
     return this.buildNaiveRecycler();
   }
 }

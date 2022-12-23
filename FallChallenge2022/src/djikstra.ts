@@ -33,7 +33,7 @@ export const dijtstraAlgorithm = (
           !visited[xToUpdate][yToUpdate] &&
           map[xToUpdate][yToUpdate].canMove &&
           // Performance optimisation as we never try to move 10 blocks away
-          distances[x][y] < 20
+          distances[x][y] < 10
         ) {
           const newValue = 1 + distances[x][y];
           if (newValue < distances[xToUpdate][yToUpdate]) {

@@ -5,8 +5,11 @@ import { debug } from "./helpers";
 import {
   dangerousOpponentRobots,
   emptyBlocks,
+  height,
+  map,
   myBlocks,
   myMatter,
+  myRobots,
   notMyBlocks,
   opponentRobots,
   Owner,
@@ -15,6 +18,29 @@ import {
 } from "./State";
 
 export class RobotBuilder {
+  public isExtensionDone = false;
+
+  checkExtensionDone() {
+    if (this.isExtensionDone) {
+      debug("Extension is done");
+      return true;
+    }
+    debug("Extension in progress");
+    for (const robot of myRobots) {
+      for (const neighbor of robot.neighbors) {
+        if (neighbor.owner === Owner.OPPONENT && neighbor.units > 0) {
+          this.isExtensionDone = true;
+          return true;
+        }
+      }
+    }
+    for (let i = 0; i < height; i++) {
+      if (!map[i].find((block) => block.owner === Owner.ME)) return false;
+    }
+    this.isExtensionDone = true;
+    return true;
+  }
+
   computeExpensionSpawn() {
     const expensionRadius = 5;
     const possibleSpawns = myBlocks.filter(
@@ -40,6 +66,7 @@ export class RobotBuilder {
         block.canSpawn &&
         (block.island?.owner !== Owner.ME || !block.island?.hasRobot)
     );
+    debug("possibleSpawn", blocksToSpawn.length);
     blocksToSpawn.sort((a, b) => {
       let minAToEmpty = Infinity;
       let minBToEmpty = Infinity;
@@ -100,6 +127,7 @@ export class RobotBuilder {
   }
 
   computeDefensiveSpawn() {
+    debug("computeDefensiveSpawn");
     const blocksToSpawn: Block[] = [];
 
     for (const robot of dangerousOpponentRobots) {
@@ -118,9 +146,11 @@ export class RobotBuilder {
 
     // Ordre de priorité
     let blocksToSpawn: Block[] = [];
-    if (turn < width / 2 - 3) blocksToSpawn = this.computeExpensionSpawn();
-    else if (dangerousOpponentRobots.length)
-      blocksToSpawn = this.computeDefensiveSpawn();
+    // if (dangerousOpponentRobots.length)
+    //   blocksToSpawn = this.computeDefensiveSpawn();
+    // else
+    if (!this.checkExtensionDone())
+      blocksToSpawn = this.computeExpensionSpawn();
     else blocksToSpawn = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;
