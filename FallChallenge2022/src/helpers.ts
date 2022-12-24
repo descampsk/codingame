@@ -1,9 +1,10 @@
 import { Point } from "@mathigon/euclid";
 import { Block } from "./Block";
+import { DEBUG } from "./State";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const debug = (...data: any[]) => {
-  console.error(...data);
+  if (DEBUG) console.error(...data);
 };
 
 export function minBy<T>(

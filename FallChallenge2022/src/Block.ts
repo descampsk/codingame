@@ -158,11 +158,33 @@ export class Block {
     this.potentiel = 0;
     for (let i = 0; i < notMyBlocks.length; i++) {
       const block = notMyBlocks[i];
-      if (computeManhattanDistance(block, this) <= radius) {
-        if (block.owner === Owner.OPPONENT) this.potentiel += 1.5;
-        else this.potentiel += 1;
+      let distance = this.distanceToBlock(block);
+      if (distance === 0) distance = 0.5;
+      if (distance <= radius) {
+        if (block.owner === Owner.OPPONENT) this.potentiel += 2 / distance;
+        else if (block.owner === Owner.NONE) this.potentiel += 1 / distance;
       }
     }
     return this.potentiel;
+  }
+
+  /**
+   * Should be called sort((a,b) => a.compareOwner(b))
+   * @param block
+   * @returns
+   */
+  compareOwner(block: Block) {
+    if (this.owner === block.owner) return 0;
+    if (this.owner === Owner.ME) {
+      return 1;
+    }
+    if (this.owner === Owner.NONE) {
+      if (block.owner === Owner.OPPONENT) return 1;
+      if (block.owner === Owner.ME) return -1;
+    }
+    if (this.owner === Owner.OPPONENT) {
+      return -1;
+    }
+    return 0;
   }
 }

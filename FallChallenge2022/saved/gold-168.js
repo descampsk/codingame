@@ -1,6 +1,6 @@
 // src/helpers.ts
 const debug = (...data) => {
-  console.error(...data);
+  //   console.error(...data);
 };
 function minBy(array, callback) {
   let min = Infinity;

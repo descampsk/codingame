@@ -1,7 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Block } from "./Block";
 import { debug } from "./helpers";
 import { Island } from "./Island";
 import { findSymmetryAxis } from "./symetrie";
+
+export const DEBUG = false;
 
 export const debugTime = false;
 
@@ -32,6 +35,30 @@ export enum Owner {
 
 export let side: Side = Side.UNKNOWN;
 export const map: Block[][] = [];
+
+export let startPositionFound = false;
+export let myStartPosition: Block = new Block(
+  0,
+  0,
+  0,
+  Owner.NONE,
+  0,
+  false,
+  false,
+  false,
+  false
+);
+export let opponentStartPosition: Block = new Block(
+  0,
+  0,
+  0,
+  Owner.NONE,
+  0,
+  false,
+  false,
+  false,
+  false
+);
 
 export let blocks: Block[] = [];
 export let emptyBlocks: Block[] = [];
@@ -133,18 +160,47 @@ const computeData = () => {
   if (debugTime) debug("computeData time: %dms", end);
 };
 
+const computeStartPosition = () => {
+  if (startPositionFound) return;
+
+  // La case départ est celle en commun pour tous les robots
+
+  myStartPosition = myRobots[0].neighbors.find((block) => {
+    for (const robot of myRobots) {
+      if (!robot.neighbors.find((neighbor) => neighbor.equals(block)))
+        return false;
+    }
+    return true;
+  })!;
+
+  opponentStartPosition = opponentRobots[0].neighbors.find((block) => {
+    for (const robot of opponentRobots) {
+      if (!robot.neighbors.find((neighbor) => neighbor.equals(block)))
+        return false;
+    }
+    return true;
+  })!;
+
+  startPositionFound = true;
+};
+
 export const refresh = () => {
   turn += 1;
   readInputs();
 
   computeData();
 
+  computeStartPosition();
+
   //   const symetrie = findSymmetryAxis(map, "central");
   //   console.log(symetrie);
 
   //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
 
-  //   debug("Block:", map[6][5].neighbors);
+  //   debug("Block:", map[6][2].getPotentiel(5));
+  //   debug("Block:", map[6][1].getPotentiel(5));
+  //   debug("Block:", map[5][2].getPotentiel(5));
+  //   debug("Block:", map[5][1].getPotentiel(5));
 
   islands = Island.findIslands();
   //   debug("Island:", islands.length);

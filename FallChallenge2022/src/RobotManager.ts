@@ -3,7 +3,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
-import { debug, minBy } from "./helpers";
+import { computeManhattanDistance, debug, minBy } from "./helpers";
 import {
   myRobots,
   notMyBlocks,
@@ -12,6 +12,8 @@ import {
   width,
   blocks,
   debugTime,
+  myStartPosition,
+  opponentStartPosition,
 } from "./State";
 
 export class RobotManager {
@@ -25,24 +27,45 @@ export class RobotManager {
     const targets: Block[] = [];
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
-      const nearestEmptyBlocks = notMyBlocks
+      //   debug("Block", robot.x, robot.y, robot.neighbors.length);
+      const nearestEmptyBlocks = robot.neighbors
         .sort((a, b) => {
-          const distanceA = robot.distanceToBlock(a);
-          const distanceB = robot.distanceToBlock(b);
-
           const potentielRadius = 5;
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
 
+          //   debug("potentielA", a.x, a.y, potentielA);
+          //   debug("potentielB", b.x, b.y, potentielB);
+
+          const distanceToMyStartA = computeManhattanDistance(
+            a,
+            myStartPosition
+          );
+          const distanceToMyStartB = computeManhattanDistance(
+            b,
+            myStartPosition
+          );
+
+          const distanceToOpponentStartA = computeManhattanDistance(
+            a,
+            opponentStartPosition
+          );
+          const distanceToOpponentStartB = computeManhattanDistance(
+            b,
+            opponentStartPosition
+          );
+
           // Ordre de priorité
-          // - block le plus proche
           // - si case ennemie, on tue les robots en premier
           // - ennemie avant vide
           // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
-          if (distanceA !== distanceB) return distanceA - distanceB;
-          if (a.owner !== b.owner) return b.owner - a.owner;
-          if (a.owner === Owner.OPPONENT) return b.units - a.units;
+          if (a.owner !== b.owner) return a.compareOwner(b);
+          if (a.owner === Owner.OPPONENT || b.owner === Owner.OPPONENT)
+            return (
+              (b.owner === Owner.OPPONENT ? b.units : 0) -
+              (a.owner === Owner.OPPONENT ? a.units : 0)
+            );
           if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
         })
@@ -52,6 +75,7 @@ export class RobotManager {
           return willBecomeGrass > robot.distanceToBlock(block);
         });
 
+      //   debug(nearestEmptyBlocks.slice(0, 2));
       let i = 0;
       while (
         i < nearestEmptyBlocks.length &&
