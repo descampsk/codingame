@@ -4,6 +4,7 @@ import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
 import { Island } from "./Island";
 import {
+  blocks,
   dangerousOpponentRobots,
   debugTime,
   height,
@@ -100,6 +101,7 @@ export class RecyclerBuilder {
         setMyMatter(myMatter - 10);
       }
     }
+    debug("buildNaiveRecycler: ", actions.length);
     return actions;
   }
 
@@ -134,7 +136,14 @@ export class RecyclerBuilder {
       debug("defensiveBuild: ", defensiveActions.length);
       return defensiveActions;
     }
-    return this.buildNaiveRecycler();
+    const notGrassBlocks = blocks.filter((block) => !block.isGrass);
+    if (
+      notGrassBlocks.length >= 80 ||
+      opponentRecyclers.length > myRecyclers.length
+    )
+      return this.buildNaiveRecycler();
+
+    return [];
   }
 }
 
