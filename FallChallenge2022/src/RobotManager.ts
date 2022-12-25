@@ -24,7 +24,6 @@ export class RobotManager {
 
     debug("RobotManager - naive mode");
     const actions: Action[] = [];
-    const targets: Block[] = [];
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
       //   debug("Block", robot.x, robot.y, robot.neighbors.length);
@@ -76,31 +75,9 @@ export class RobotManager {
           return willBecomeGrass > robot.distanceToBlock(block);
         });
 
-      //   debug(nearestEmptyBlocks.slice(0, 2));
-      let i = 0;
-      while (
-        i < nearestEmptyBlocks.length &&
-        targets.find(
-          (target) =>
-            target.equals(nearestEmptyBlocks[i]) &&
-            nearestEmptyBlocks[i].owner !== Owner.OPPONENT
-        )
-      ) {
-        i += 1;
-      }
-
-      const nearestEmptyBlock =
-        i < nearestEmptyBlocks.length
-          ? nearestEmptyBlocks[i]
-          : nearestEmptyBlocks[0];
+      const nearestEmptyBlock = nearestEmptyBlocks[0];
 
       if (nearestEmptyBlock) {
-        if (
-          robot.distanceToBlock(nearestEmptyBlock) === 1 &&
-          nearestEmptyBlock.owner === Owner.NONE
-        )
-          targets.push(nearestEmptyBlock);
-
         actions.push(
           new MoveAction(
             1,

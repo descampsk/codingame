@@ -539,19 +539,18 @@ var notMyBlocks = [];
 let opponentBlocks = [];
 var myRobots = [];
 let opponentRobots = [];
-let dangerousOpponentRobots = [];
 let myRecyclers = [];
 let opponentRecyclers = [];
 const createMap = (width3, height2) => {
   const map2 = [];
   for (let i = 0; i < height2; i++) {
-    const blocks2 = [];
+    const blocks3 = [];
     for (let j = 0; j < width3; j++) {
-      blocks2.push(
+      blocks3.push(
         new Block(j, i, 0, -1 /* NONE */, 0, false, false, false, false)
       );
     }
-    map2.push(blocks2);
+    map2.push(blocks3);
   }
   return map2;
 };
@@ -603,7 +602,6 @@ const computeData = () => {
   emptyBlocks = [];
   myRobots = [];
   opponentRobots = [];
-  dangerousOpponentRobots = [];
   myRecyclers = [];
   opponentRecyclers = [];
   blocks.forEach((block) => {
@@ -620,7 +618,6 @@ const computeData = () => {
     if (block.owner === 1 /* ME */ && block.recycler) myRecyclers.push(block);
     if (block.owner === 0 /* OPPONENT */ && block.recycler)
       opponentRecyclers.push(block);
-    if (block.isDangerousRobotOpponent) dangerousOpponentRobots.push(block);
   });
   if (side === 0 /* UNKNOWN */)
     side = myRobots[0].x < width / 2 ? 1 /* LEFT */ : -1 /* RIGHT */;
@@ -806,56 +803,6 @@ const recyclerBuilder = new RecyclerBuilder();
 
 // src/RobotBuilder.ts
 const RobotBuilder = class {
-  constructor() {
-    this.isExtensionDone = false;
-  }
-
-  checkExtensionDone() {
-    if (this.isExtensionDone) {
-      debug("Extension is done");
-      return true;
-    }
-    debug("Extension in progress");
-    for (const robot of myRobots) {
-      for (const neighbor of robot.neighbors) {
-        if (neighbor.owner === 0 /* OPPONENT */ && neighbor.units > 0) {
-          this.isExtensionDone = true;
-          return true;
-        }
-      }
-    }
-    for (let i = 0; i < height; i++) {
-      if (!map[i].find((block) => block.owner === 1 /* ME */)) return false;
-    }
-    this.isExtensionDone = true;
-    return true;
-  }
-
-  computeExpensionSpawn() {
-    const start = new Date();
-    const expensionRadius = 5;
-    const possibleSpawns = myBlocks.filter(
-      (block) =>
-        block.canSpawn &&
-        block.canMove &&
-        block.neighbors.find((a) => a.owner !== 1 /* ME */) &&
-        block.units < 2
-    );
-    possibleSpawns.sort((a, b) => {
-      const blocksAToExpand = emptyBlocks.filter(
-        (block) => a.distanceToBlock(block) <= expensionRadius
-      );
-      const blocksBToExpand = emptyBlocks.filter(
-        (block) => b.distanceToBlock(block) <= expensionRadius
-      );
-      return blocksBToExpand.length - blocksAToExpand.length;
-    });
-    debug("ExpensionSpawn:", possibleSpawns.length);
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) debug("computeExpensionSpawn time: %dms", end);
-    return possibleSpawns;
-  }
-
   computeNormalSpawn() {
     const blocksToSpawn = myBlocks.filter((block) => {
       let _a;
@@ -925,23 +872,9 @@ const RobotBuilder = class {
     return blocksToSpawn;
   }
 
-  computeDefensiveSpawn() {
-    debug("computeDefensiveSpawn");
-    const blocksToSpawn = [];
-    for (const robot of dangerousOpponentRobots) {
-      for (const neighbor of robot.neighbors.filter(
-        (block) => block.canSpawn
-      )) {
-        blocksToSpawn.push(neighbor);
-      }
-    }
-    return blocksToSpawn;
-  }
-
   action() {
     const actions = [];
-    let blocksToSpawn = [];
-    blocksToSpawn = this.computeNormalSpawn();
+    const blocksToSpawn = this.computeNormalSpawn();
     let blockToSpawnIndex = 0;
     let predictedMatter = myMatter;
     while (predictedMatter >= 10 && blocksToSpawn[blockToSpawnIndex]) {
@@ -1044,34 +977,6 @@ const RobotManager = class {
     }
     const end = new Date().getTime() - start.getTime();
     if (debugTime) debug("RobotManager naive method time: %dms", end);
-    return actions;
-  }
-
-  expandMethod() {
-    debug("RobotManager - expand mode");
-    const actions = [];
-    const targetX = Math.floor(width / 2);
-    const targets = blocks.filter(
-      (block) =>
-        block.x === targetX && block.canMove && block.owner !== 1 /* ME */
-    );
-    const robotsToExtend = this.robotsToMove.filter(
-      (robot) => side * (robot.x - targetX) < 0
-    );
-    do {
-      const target = targets.shift();
-      const { min: robot, index } = minBy(robotsToExtend, (robot2) =>
-        robot2.distanceToBlock(target)
-      );
-      if (robot && index !== null) {
-        const { x, y } = robot;
-        const { y: targetY } = target;
-        debug("MOVE", x, y, targetX, targetY);
-        actions.push(new MoveAction(1, x, y, targetX, targetY));
-        robotsToExtend.splice(index, 1);
-        robot.hasMoved = true;
-      }
-    } while (targets.length && robotsToExtend.length);
     return actions;
   }
 
