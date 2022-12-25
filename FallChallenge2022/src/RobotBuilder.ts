@@ -8,6 +8,7 @@ import {
   notMyBlocks,
   opponentRobots,
   Owner,
+  side,
 } from "./State";
 
 export class RobotBuilder {
@@ -23,18 +24,18 @@ export class RobotBuilder {
     blocksToSpawn.sort((a, b) => {
       let minAToEmpty = Infinity;
       let minBToEmpty = Infinity;
-      let nearestABlockOwner = Owner.NONE;
-      let nearestBBlockOwner = Owner.NONE;
+      let nearestABlock = a;
+      let nearestBBlock = b;
       for (const emptyBlock of notMyBlocks) {
         const distanceA = a.distanceToBlock(emptyBlock);
         const distanceB = b.distanceToBlock(emptyBlock);
         if (distanceA < minAToEmpty) {
           minAToEmpty = distanceA;
-          nearestABlockOwner = emptyBlock.owner;
+          nearestABlock = emptyBlock;
         }
         if (distanceB < minBToEmpty) {
           minBToEmpty = distanceB;
-          nearestBBlockOwner = emptyBlock.owner;
+          nearestBBlock = emptyBlock;
         }
       }
 
@@ -72,8 +73,8 @@ export class RobotBuilder {
       // - à nombre de voisins égals, on prend celle qui a le moins d'unité sur la case
       // - à nombre d'unités égale, on prend celui qui a le meilleur potentiel
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
-      if (nearestABlockOwner !== nearestBBlockOwner)
-        return nearestBBlockOwner - nearestABlockOwner;
+      if (nearestABlock.owner !== nearestBBlock.owner)
+        return nearestABlock.compareOwner(nearestBBlock);
       if (
         distanceToNearestOpponentA !== distanceToNearestOpponentB &&
         (distanceToNearestOpponentA === 1 || distanceToNearestOpponentB === 1)
@@ -81,8 +82,9 @@ export class RobotBuilder {
         return distanceToNearestOpponentA - distanceToNearestOpponentB;
       if (interrestingANeighbors !== interrestingBNeighbors)
         return interrestingBNeighbors - interrestingANeighbors;
+      if (potentielA !== potentielB) return potentielB - potentielA;
       if (a.units !== b.units) return a.units - b.units;
-      return potentielB - potentielA;
+      return side * (b.x - a.x);
     });
     return blocksToSpawn;
   }
