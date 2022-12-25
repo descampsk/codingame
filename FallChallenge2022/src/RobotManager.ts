@@ -117,47 +117,6 @@ export class RobotManager {
     return actions;
   }
 
-  expandMethod() {
-    debug("RobotManager - expand mode");
-    const actions: Action[] = [];
-    const targetX = Math.floor(width / 2);
-    const targets = blocks.filter(
-      (block) =>
-        block.x === targetX && block.canMove && block.owner !== Owner.ME
-    );
-    const robotsToExtend = this.robotsToMove.filter(
-      (robot) => side * (robot.x - targetX) < 0
-    );
-    do {
-      const target = targets.shift()!;
-      const { min: robot, index } = minBy(robotsToExtend, (robot) =>
-        robot.distanceToBlock(target)
-      );
-      if (robot && index !== null) {
-        const { x, y } = robot;
-        const { y: targetY } = target;
-        debug("MOVE", x, y, targetX, targetY);
-        actions.push(new MoveAction(1, x, y, targetX, targetY));
-        robotsToExtend.splice(index, 1);
-        robot.hasMoved = true;
-      }
-    } while (targets.length && robotsToExtend.length);
-
-    // while (targets.length && myMatter >= 10) {
-    //   const target = targets.pop()!;
-    //   const { min: nearestBlock } = minBy(myBlocks, (block) =>
-    //     block.distanceToBlock(target)
-    //   );
-    //   if (nearestBlock) {
-    //     const { x, y } = nearestBlock;
-    //     actions.push(new SpawnAction(1, x, y));
-    //     setMyMatter(myMatter - 10);
-    //   }
-    // }
-
-    return actions;
-  }
-
   action() {
     this.robotsToMove = Array.from(myRobots);
     const actions = [...this.naiveMethod()];

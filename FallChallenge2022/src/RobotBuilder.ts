@@ -3,71 +3,14 @@ import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
 import { debug } from "./helpers";
 import {
-  dangerousOpponentRobots,
-  debugTime,
-  emptyBlocks,
-  height,
-  map,
   myBlocks,
   myMatter,
-  myRobots,
   notMyBlocks,
   opponentRobots,
   Owner,
-  turn,
-  width,
 } from "./State";
 
 export class RobotBuilder {
-  public isExtensionDone = false;
-
-  checkExtensionDone() {
-    if (this.isExtensionDone) {
-      debug("Extension is done");
-      return true;
-    }
-    debug("Extension in progress");
-    for (const robot of myRobots) {
-      for (const neighbor of robot.neighbors) {
-        if (neighbor.owner === Owner.OPPONENT && neighbor.units > 0) {
-          this.isExtensionDone = true;
-          return true;
-        }
-      }
-    }
-    for (let i = 0; i < height; i++) {
-      if (!map[i].find((block) => block.owner === Owner.ME)) return false;
-    }
-    this.isExtensionDone = true;
-    return true;
-  }
-
-  computeExpensionSpawn() {
-    const start = new Date();
-    const expensionRadius = 5;
-    const possibleSpawns = myBlocks.filter(
-      (block) =>
-        block.canSpawn &&
-        block.canMove &&
-        block.neighbors.find((a) => a.owner !== Owner.ME) &&
-        block.units < 2
-    );
-    possibleSpawns.sort((a, b) => {
-      const blocksAToExpand = emptyBlocks.filter(
-        (block) => a.distanceToBlock(block) <= expensionRadius
-      );
-      const blocksBToExpand = emptyBlocks.filter(
-        (block) => b.distanceToBlock(block) <= expensionRadius
-      );
-
-      return blocksBToExpand.length - blocksAToExpand.length;
-    });
-    debug("ExpensionSpawn:", possibleSpawns.length);
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) debug("computeExpensionSpawn time: %dms", end);
-    return possibleSpawns;
-  }
-
   computeNormalSpawn() {
     const blocksToSpawn = myBlocks.filter(
       (block) =>
@@ -144,32 +87,9 @@ export class RobotBuilder {
     return blocksToSpawn;
   }
 
-  computeDefensiveSpawn() {
-    debug("computeDefensiveSpawn");
-    const blocksToSpawn: Block[] = [];
-
-    for (const robot of dangerousOpponentRobots) {
-      for (const neighbor of robot.neighbors.filter(
-        (block) => block.canSpawn
-      )) {
-        blocksToSpawn.push(neighbor);
-      }
-    }
-
-    return blocksToSpawn;
-  }
-
   action() {
     const actions: Action[] = [];
-
-    // Ordre de priorité
-    let blocksToSpawn: Block[] = [];
-    // if (dangerousOpponentRobots.length)
-    //   blocksToSpawn = this.computeDefensiveSpawn();
-    // else
-    // if (!this.checkExtensionDone())
-    //   blocksToSpawn = this.computeExpensionSpawn();
-    blocksToSpawn = this.computeNormalSpawn();
+    const blocksToSpawn: Block[] = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;
     let predictedMatter = myMatter;

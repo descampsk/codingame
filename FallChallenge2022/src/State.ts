@@ -1,11 +1,8 @@
-/* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Block } from "./Block";
-import { dijtstraAlgorithm } from "./djikstra";
 import { expensionManager } from "./ExpensionManager";
 import { debug } from "./helpers";
 import { Island } from "./Island";
-import { findSymmetryAxis } from "./symetrie";
 
 export const DEBUG = false;
 
@@ -76,7 +73,6 @@ export let opponentBlocks: Block[] = [];
 
 export let myRobots: Block[] = [];
 export let opponentRobots: Block[] = [];
-export let dangerousOpponentRobots: Block[] = [];
 
 export const myRobotsDistanceMap: Record<string, number[][]> = {};
 
@@ -156,7 +152,6 @@ export const computeData = () => {
   emptyBlocks = [];
   myRobots = [];
   opponentRobots = [];
-  dangerousOpponentRobots = [];
   myRecyclers = [];
   opponentRecyclers = [];
 
@@ -174,7 +169,6 @@ export const computeData = () => {
     if (block.owner === Owner.ME && block.recycler) myRecyclers.push(block);
     if (block.owner === Owner.OPPONENT && block.recycler)
       opponentRecyclers.push(block);
-    if (block.isDangerousRobotOpponent) dangerousOpponentRobots.push(block);
   });
 
   if (side === Side.UNKNOWN)
@@ -218,9 +212,6 @@ export const refresh = () => {
   computeData();
 
   computeStartPosition();
-
-  //   const symetrie = findSymmetryAxis(map, "central");
-  //   console.log(symetrie);
 
   //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
 

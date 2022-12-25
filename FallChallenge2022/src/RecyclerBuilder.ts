@@ -2,10 +2,8 @@
 import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug } from "./helpers";
-import { Island } from "./Island";
 import {
   blocks,
-  dangerousOpponentRobots,
   debugTime,
   height,
   map,
