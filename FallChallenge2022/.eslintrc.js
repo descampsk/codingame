@@ -32,6 +32,8 @@ module.exports = {
     "import/no-unresolved": "off",
     "no-shadow": "off",
     "import/no-mutable-exports": "off",
+    "no-continue": "off",
+    "no-useless-constructor": "off",
     radix: "off",
   },
 };

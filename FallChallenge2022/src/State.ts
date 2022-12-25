@@ -1,5 +1,8 @@
+/* eslint-disable no-continue */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Block } from "./Block";
+import { dijtstraAlgorithm } from "./djikstra";
+import { expensionManager } from "./ExpensionManager";
 import { debug } from "./helpers";
 import { Island } from "./Island";
 import { findSymmetryAxis } from "./symetrie";
@@ -60,6 +63,8 @@ export let opponentStartPosition: Block = new Block(
   false
 );
 
+export const separation: Block[] = [];
+
 export let blocks: Block[] = [];
 export let emptyBlocks: Block[] = [];
 
@@ -78,10 +83,8 @@ export const myRobotsDistanceMap: Record<string, number[][]> = {};
 export let myRecyclers: Block[] = [];
 export let opponentRecyclers: Block[] = [];
 
-export const getMap = () => {
-  [width, height] = readline()
-    .split(" ")
-    .map((value) => Number.parseInt(value, 10));
+export const createMap = (width: number, height: number) => {
+  const map: Block[][] = [];
   for (let i = 0; i < height; i++) {
     const blocks: Block[] = [];
     for (let j = 0; j < width; j++) {
@@ -91,39 +94,60 @@ export const getMap = () => {
     }
     map.push(blocks);
   }
+  return map;
+};
+
+export const readMapInput = () => {
+  const line = readline();
+  //   debug(line);
+  [width, height] = line.split(" ").map((value) => Number.parseInt(value, 10));
+  map.push(...createMap(width, height));
+};
+
+export const parseLineToMap = (
+  line: string,
+  i: number,
+  j: number,
+  mapToUpdate: Block[][]
+) => {
+  const inputs = line.split(" ");
+  const scrapAmount = parseInt(inputs[0]);
+  const owner = parseInt(inputs[1]); // 1 = me, 0 = foe, -1 = neutral
+  const units = parseInt(inputs[2]);
+  const recycler = parseInt(inputs[3]) > 0;
+  const canBuild = parseInt(inputs[4]) > 0;
+  const canSpawn = parseInt(inputs[5]) > 0;
+  const inRangeOfRecycler = parseInt(inputs[6]) > 0;
+  mapToUpdate[i][j].update({
+    scrapAmount,
+    owner,
+    units,
+    recycler,
+    canBuild,
+    canSpawn,
+    inRangeOfRecycler,
+  });
 };
 
 export const readInputs = () => {
   const start = new Date();
-  const matters = readline().split(" ");
+  const mattersLine = readline();
+  //   debug(mattersLine);
+  const matters = mattersLine.split(" ");
   myMatter = parseInt(matters[0]);
   oppMatter = parseInt(matters[1]);
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
-      const inputs = readline().split(" ");
-      const scrapAmount = parseInt(inputs[0]);
-      const owner = parseInt(inputs[1]); // 1 = me, 0 = foe, -1 = neutral
-      const units = parseInt(inputs[2]);
-      const recycler = parseInt(inputs[3]) > 0;
-      const canBuild = parseInt(inputs[4]) > 0;
-      const canSpawn = parseInt(inputs[5]) > 0;
-      const inRangeOfRecycler = parseInt(inputs[6]) > 0;
-      map[i][j].update({
-        scrapAmount,
-        owner,
-        units,
-        recycler,
-        canBuild,
-        canSpawn,
-        inRangeOfRecycler,
-      });
+      const line = readline();
+      //   debug(line);
+      parseLineToMap(line, i, j, map);
     }
   }
   const end = new Date().getTime() - start.getTime();
   if (debugTime) debug("readInputs time: %dms", end);
 };
 
-const computeData = () => {
+export const computeData = () => {
   const start = new Date();
   blocks = map.flat();
   myBlocks = [];
@@ -160,8 +184,9 @@ const computeData = () => {
   if (debugTime) debug("computeData time: %dms", end);
 };
 
-const computeStartPosition = () => {
-  if (startPositionFound) return;
+export const computeStartPosition = (forceReset = false) => {
+  const start = new Date();
+  if (startPositionFound && !forceReset) return;
 
   // La case départ est celle en commun pour tous les robots
 
@@ -182,6 +207,8 @@ const computeStartPosition = () => {
   })!;
 
   startPositionFound = true;
+  const end = new Date().getTime() - start.getTime();
+  if (debugTime) debug("computeStartPosition time: %dms", end);
 };
 
 export const refresh = () => {
@@ -203,6 +230,8 @@ export const refresh = () => {
   //   debug("Block:", map[5][1].getPotentiel(5));
 
   islands = Island.findIslands();
+
+  expensionManager.computeSeparation();
   //   debug("Island:", islands.length);
   //   debug("Block:", map[4][4].neighbors);
   //   debug("Island:", map[1][6].neighbors);

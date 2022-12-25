@@ -30,7 +30,8 @@ export class RobotManager {
       //   debug("Block", robot.x, robot.y, robot.neighbors.length);
       const nearestEmptyBlocks = robot.neighbors
         .sort((a, b) => {
-          const potentielRadius = 5;
+          const potentielRadius =
+            robot.island?.owner === Owner.ME ? Infinity : 5;
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
 

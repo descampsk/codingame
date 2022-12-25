@@ -1,4 +1,4 @@
-import { Point } from "@mathigon/euclid";
+import { readFileSync } from "fs";
 import { Block } from "./Block";
 import { DEBUG } from "./State";
 
@@ -27,3 +27,8 @@ export function minBy<T>(
 
 export const computeManhattanDistance = (blockA: Block, blockB: Block) =>
   Math.abs(blockA.x - blockB.x) + Math.abs(blockA.y - blockB.y);
+
+export const readTestFile = (fileName: string): string[] => {
+  const file = readFileSync(fileName, "utf-8");
+  return file.split(/\r?\n/);
+};

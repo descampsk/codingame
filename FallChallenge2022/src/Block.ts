@@ -141,6 +141,7 @@ export class Block {
     this.island = null;
     this.djikstraMap = [];
     this.potentiel = null;
+    this.hasMoved = false;
   }
 
   distanceToBlock(block: Block) {
@@ -148,7 +149,7 @@ export class Block {
     const { x, y } = block;
 
     if (!this.djikstraMap.length) {
-      this.djikstraMap = dijtstraAlgorithm(map, this.y, this.x);
+      this.djikstraMap = dijtstraAlgorithm(map, [[this.y, this.x]]);
     }
     return this.djikstraMap[y][x];
   }

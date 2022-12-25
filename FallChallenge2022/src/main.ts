@@ -1,8 +1,8 @@
 import { debug } from "./helpers";
 import { ia } from "./IA";
-import { debugTime, getMap, refresh } from "./State";
+import { debugTime, readMapInput, refresh } from "./State";
 
-getMap();
+readMapInput();
 
 // game loop
 // eslint-disable-next-line no-constant-condition

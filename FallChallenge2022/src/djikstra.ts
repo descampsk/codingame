@@ -4,22 +4,23 @@ import { debugTime } from "./State";
 
 export const dijtstraAlgorithm = (
   map: Block[][],
-  startX: number,
-  startY: number
+  startingBlocks: number[][]
 ) => {
   const start = new Date();
 
   const distances: number[][] = new Array(map.length)
     .fill(Infinity)
     .map(() => new Array(map[0].length).fill(Infinity));
-  distances[startX][startY] = 0;
+  startingBlocks.forEach(([x, y]) => {
+    distances[x][y] = 0;
+  });
 
   const visited: number[][] = new Array(map.length)
     .fill(0)
     .map(() => new Array(map[0].length).fill(0));
 
-  const nextBlocks: number[][] = [];
-  let currentBlock = [startX, startY];
+  const nextBlocks: number[][] = Array.from(startingBlocks);
+  let currentBlock = nextBlocks.pop();
   while (currentBlock) {
     const [x, y] = currentBlock;
     for (let i = -1; i <= 1; i++) {
@@ -34,9 +35,9 @@ export const dijtstraAlgorithm = (
           yToUpdate >= 0 &&
           yToUpdate < map[0].length &&
           !visited[xToUpdate][yToUpdate] &&
-          map[xToUpdate][yToUpdate].canMove &&
+          map[xToUpdate][yToUpdate].canMove // &&
           // Performance optimisation as we never try to move 10 blocks away
-          distances[x][y] < 10
+          //   distances[x][y] < 10
         ) {
           const newValue = 1 + distances[x][y];
           if (newValue < distances[xToUpdate][yToUpdate]) {

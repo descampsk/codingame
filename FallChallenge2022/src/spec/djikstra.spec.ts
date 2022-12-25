@@ -1,5 +1,5 @@
-import { Block } from "./Block";
-import { dijtstraAlgorithm } from "./djikstra";
+import { Block } from "../Block";
+import { dijtstraAlgorithm } from "../djikstra";
 
 describe("dijtstraAlgorithm", () => {
   const canMove = { canMove: true };
@@ -12,7 +12,7 @@ describe("dijtstraAlgorithm", () => {
       [canMove, canMove, canMove, canMove],
       [canMove, canMove, canMove, canMove],
     ] as Block[][];
-    const distances = dijtstraAlgorithm(grid, 0, 0);
+    const distances = dijtstraAlgorithm(grid, [[0, 0]]);
     console.log(distances); // affichera un tableau 2D contenant les distances de Manhattan de chaque case à l'origine
     expect(distances).toEqual([
       [0, 1, 2, 3],
@@ -29,7 +29,7 @@ describe("dijtstraAlgorithm", () => {
       [canMove, cantMove, canMove, canMove],
       [canMove, canMove, canMove, canMove],
     ] as Block[][];
-    const distances = dijtstraAlgorithm(grid, 0, 0);
+    const distances = dijtstraAlgorithm(grid, [[0, 0]]);
     console.log(distances); // affichera un tableau 2D contenant les distances de Manhattan de chaque case à l'origine
     expect(distances).toEqual([
       [0, 1, 2, 3],
