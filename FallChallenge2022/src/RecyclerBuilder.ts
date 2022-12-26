@@ -132,7 +132,8 @@ export class RecyclerBuilder {
       (notGrassBlocks.length >= 80 ||
         opponentRecyclers.length > myRecyclers.length) &&
       (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
-      myMatter < 50
+      // Lost 100 seats in the Leaderboard if I remove this condition
+      myMatter < 40
     ) {
       this.hasBuildLastRound = true;
       return this.buildNaiveRecycler();
