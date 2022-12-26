@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable class-methods-use-this */
 import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
-import { debug } from "./helpers";
+import { debug, minBy } from "./helpers";
 import {
   myBlocks,
   myMatter,
@@ -12,7 +13,15 @@ import {
 } from "./State";
 
 export class RobotBuilder {
+  private SHOULD_DEBUG = true;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private debug(...data: any[]) {
+    if (this.SHOULD_DEBUG) debug("[RobotBuilder]", ...data);
+  }
+
   computeNormalSpawn() {
+    // On spawn que si le block adjacent a au moins un voisin vide ou ennemi
     const blocksToSpawn = myBlocks.filter(
       (block) =>
         block.canSpawn &&
@@ -20,7 +29,11 @@ export class RobotBuilder {
         block.willBecomeGrass > 1 &&
         block.neighbors.find((a) => a.owner !== Owner.ME)
     );
-    debug("possibleSpawn", blocksToSpawn.length);
+    this.debug(
+      "possibleSpawn",
+      blocksToSpawn.length,
+      blocksToSpawn.map((block) => [block.x, block.y])
+    );
     blocksToSpawn.sort((a, b) => {
       let minAToEmpty = Infinity;
       let minBToEmpty = Infinity;
@@ -39,27 +52,13 @@ export class RobotBuilder {
         }
       }
 
-      const distanceToNearestOpponentA = opponentRobots.reduce(
-        (distance, opponent) => {
-          const newDistance = a.distanceToBlock(opponent);
-          return newDistance < distance ? newDistance : distance;
-        },
-        Infinity
-      );
-      const distanceToNearestOpponentB = opponentRobots.reduce(
-        (distance, opponent) => {
-          const newDistance = b.distanceToBlock(opponent);
-          return newDistance < distance ? newDistance : distance;
-        },
-        Infinity
-      );
+      const distanceToNearestOpponentA = minBy(opponentRobots, (robot) =>
+        a.distanceToBlock(robot)
+      ).value!;
 
-      const interrestingANeighbors = a.neighbors.filter(
-        (block) => block.owner !== Owner.ME
-      ).length;
-      const interrestingBNeighbors = b.neighbors.filter(
-        (block) => block.owner !== Owner.ME
-      ).length;
+      const distanceToNearestOpponentB = minBy(opponentRobots, (robot) =>
+        b.distanceToBlock(robot)
+      ).value!;
 
       const potentielRadius = 5;
       const potentielA = a.getPotentiel(potentielRadius);
@@ -67,21 +66,23 @@ export class RobotBuilder {
 
       // Ordre de priorité
       // - distance à une casse qui ne m'appartient pas
-      // - à distance égale, on prend une case ennemie
-      // - à case ennemie égale, on prend celle qui est le plus proche des ennemies
-      // - à distance égale des ennemies, on prend celui qui a le plus de voisins
+      // - on prend une case ennemie avant vide avant moi
+      // - on prend celle qui a un ennemie si on est à 1 de distance
+      // - on prend celle qui est dans la direction de ma base si un ennemie est à côté
+      // - on prend le meilleur potentiel
       // - à nombre de voisins égals, on prend celle qui a le moins d'unité sur la case
-      // - à nombre d'unités égale, on prend celui qui a le meilleur potentiel
+      // - on prend celui qui est le plus de l'autre côté
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
       if (nearestABlock.owner !== nearestBBlock.owner)
         return nearestABlock.compareOwner(nearestBBlock);
       if (
-        distanceToNearestOpponentA !== distanceToNearestOpponentB &&
-        (distanceToNearestOpponentA === 1 || distanceToNearestOpponentB === 1)
-      )
-        return distanceToNearestOpponentA - distanceToNearestOpponentB;
-      if (interrestingANeighbors !== interrestingBNeighbors)
-        return interrestingBNeighbors - interrestingANeighbors;
+        distanceToNearestOpponentA === 1 ||
+        distanceToNearestOpponentB === 1
+      ) {
+        if (distanceToNearestOpponentA !== distanceToNearestOpponentB)
+          return distanceToNearestOpponentA - distanceToNearestOpponentB;
+        return side * (a.x - b.x);
+      }
       if (potentielA !== potentielB) return potentielB - potentielA;
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);
@@ -103,7 +104,7 @@ export class RobotBuilder {
       predictedMatter -= 10;
     }
 
-    debug("RobotBuilder spawns", actions.length);
+    this.debug("Spawns", actions.length);
 
     return actions;
   }

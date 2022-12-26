@@ -15,6 +15,7 @@ import {
   opponentRecyclers,
   opponentRobots,
   Owner,
+  side,
   turn,
   width,
 } from "./State";
@@ -29,14 +30,6 @@ export class RecyclerBuilder {
       }
     }
     return false;
-  }
-
-  isAhead() {
-    return (
-      myBlocks.length >= opponentBlocks.length &&
-      myRecyclers.length >= opponentRecyclers.length &&
-      myRobots.length >= opponentRobots.length
-    );
   }
 
   computeGains(block: Block) {
@@ -104,12 +97,29 @@ export class RecyclerBuilder {
     for (const block of possibleRecyclers) {
       for (const robot of opponentRobots) {
         if (
-          ((Math.abs(robot.x - block.x) === 1 && robot.y === block.y) ||
-            (Math.abs(robot.y - block.y) === 1 && robot.x === block.x)) &&
-          myMatter >= 10 &&
-          robot.units > 1
+          side * (robot.x - block.x) === 1 &&
+          robot.y === block.y &&
+          myMatter >= 10
         ) {
-          actions.push(new BuildAction(block));
+          if (robot.units > 1) actions.push(new BuildAction(block));
+          else this.hasBuildLastRound = true;
+          break;
+        }
+      }
+    }
+    // Because we already created some recyclers we need to remove new recyclers.
+    const newPossiblesRecyclers = possibleRecyclers.filter(
+      (block) => block.canBuild
+    );
+    for (const block of newPossiblesRecyclers) {
+      for (const robot of opponentRobots) {
+        if (
+          Math.abs(robot.y - block.y) === 1 &&
+          robot.x === block.x &&
+          myMatter >= 10
+        ) {
+          if (robot.units > 1) actions.push(new BuildAction(block));
+          else this.hasBuildLastRound = true;
           break;
         }
       }

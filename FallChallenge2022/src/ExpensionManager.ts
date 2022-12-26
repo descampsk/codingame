@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { stringify } from "querystring";
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
-import { debug, minBy } from "./helpers";
+import { computeManhattanDistance, debug, minBy } from "./helpers";
 import {
   debugTime,
   map,
@@ -154,17 +153,19 @@ export class ExtensionManager {
         indexDestination,
         destination,
       ] of remainingSeparation.entries()) {
-        const { min: robotMin, index: robotIndex } = minBy(robots, (robot) =>
-          robot.distanceToBlock(destination)
-        );
-        if (robotMin && robotIndex !== null) {
-          const distance = robotMin.distanceToBlock(destination);
-          if (distance < minDistance) {
+        for (const [indexRobot, robot] of robots.entries()) {
+          const distance = robot.distanceToBlock(destination);
+          if (
+            distance < minDistance ||
+            (distance === minDistance &&
+              computeManhattanDistance(bestRobot, opponentStartPosition) <
+                computeManhattanDistance(robot, opponentStartPosition))
+          ) {
             minDistance = distance;
             bestDestination = destination;
             bestDestinationIndex = indexDestination;
-            bestRobotIndex = robotIndex;
-            bestRobot = robotMin;
+            bestRobotIndex = indexRobot;
+            bestRobot = robot;
           }
         }
       }
@@ -181,6 +182,7 @@ export class ExtensionManager {
         Math.abs(bestDestination.y - bestRobot.y);
       if (
         bestDestination.y !== bestRobot.y &&
+        map[bestRobot.y + yDirection][bestRobot.x].canMove &&
         map[bestRobot.y + yDirection][bestRobot.x].distanceToBlock(
           bestDestination
         ) ===

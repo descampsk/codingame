@@ -4,7 +4,7 @@ import { expensionManager } from "./ExpensionManager";
 import { debug } from "./helpers";
 import { Island } from "./Island";
 
-export const DEBUG = true;
+export const DEBUG = false;
 
 export const debugTime = false;
 
@@ -221,6 +221,15 @@ export const refresh = () => {
   //   debug("Block:", map[5][1].getPotentiel(5));
 
   islands = Island.findIslands();
+  debug(
+    "[Islands]",
+    islands.length,
+    islands.map((island) => ({
+      size: island.size,
+      owner: island.owner,
+      origin: [island.blocks[0].x, island.blocks[0].y],
+    }))
+  );
 
   expensionManager.computeSeparation();
   //   debug("Island:", islands.length);

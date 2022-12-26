@@ -6,6 +6,13 @@ import { debug } from "./helpers";
 import { blocks, debugTime, Owner } from "./State";
 
 export class Island {
+  private SHOULD_DEBUG = false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private debug(...data: any[]) {
+    if (this.SHOULD_DEBUG) debug("[Island]", ...data);
+  }
+
   public blocks: Block[] = [];
 
   constructor() {}

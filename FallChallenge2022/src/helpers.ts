@@ -10,7 +10,7 @@ export const debug = (...data: any[]) => {
 export function minBy<T>(
   array: Array<T>,
   callback: (value: T) => number
-): { min: T | null; index: number | null } {
+): { min: T | null; index: number | null; value: number | null } {
   let min = Infinity;
   let minObj = null;
   let minIndex = null;
@@ -22,7 +22,7 @@ export function minBy<T>(
       minIndex = index;
     }
   }
-  return { min: minObj, index: minIndex };
+  return { min: minObj, index: minIndex, value: min };
 }
 
 export const computeManhattanDistance = (blockA: Block, blockB: Block) =>
