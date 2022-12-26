@@ -15,6 +15,13 @@ import {
 export class ExtensionManager {
   public separation: Block[] = [];
 
+  private SHOULD_DEBUG = true;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private debug(...data: any[]) {
+    if (this.SHOULD_DEBUG) debug("[ExpensionManager]", ...data);
+  }
+
   computeSeparation() {
     if (this.separation.length) return;
     const start = new Date();
@@ -113,8 +120,21 @@ export class ExtensionManager {
     if (bothOwnerBlocks.length) this.separation.push(...bothOwnerBlocks);
     else this.separation.push(...wall);
 
+    // In some cases there are duplicated blocks in the array so we remove it
+    const separationMap = new Map<string, Block>();
+    for (const block of this.separation) {
+      separationMap.set(`${block.x},${block.y}`, block);
+    }
+    this.separation.splice(0);
+    this.separation.push(...separationMap.values());
+
+    this.debug(
+      "Separation",
+      this.separation.map((block) => [block.x, block.y])
+    );
+
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) debug("computeSeparation time: %dms", end);
+    if (debugTime) this.debug("computeSeparation time: %dms", end);
   }
 
   moveToSeparation() {
@@ -148,6 +168,11 @@ export class ExtensionManager {
           }
         }
       }
+
+      this.debug(
+        `BestRobot ${bestRobot.x},${bestRobot.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
+      );
+
       robots.splice(bestRobotIndex, 1);
       bestRobot.hasMoved = true;
       remainingSeparation.splice(bestDestinationIndex, 1);

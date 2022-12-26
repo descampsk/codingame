@@ -20,6 +20,8 @@ import {
 } from "./State";
 
 export class RecyclerBuilder {
+  private hasBuildLastRound = false;
+
   isNearOfARecycler(block: Block) {
     for (const recycler of myRecyclers) {
       if (computeManhattanDistance(recycler, block) < 3) {
@@ -86,13 +88,7 @@ export class RecyclerBuilder {
       });
     if (possibleRecyclers.length) {
       const recycler = possibleRecyclers[0];
-      if (
-        recycler &&
-        turn % 2 === 0 &&
-        (myRobots.length < 10 ||
-          myRobots.length <= opponentRobots.length + 5) &&
-        myMatter < 50
-      ) {
+      if (recycler) {
         actions.push(new BuildAction(recycler));
       }
     }
@@ -131,10 +127,17 @@ export class RecyclerBuilder {
     }
     const notGrassBlocks = blocks.filter((block) => !block.isGrass);
     if (
-      notGrassBlocks.length >= 80 ||
-      opponentRecyclers.length > myRecyclers.length
-    )
+      turn > 2 &&
+      !this.hasBuildLastRound &&
+      (notGrassBlocks.length >= 80 ||
+        opponentRecyclers.length > myRecyclers.length) &&
+      (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
+      myMatter < 50
+    ) {
+      this.hasBuildLastRound = true;
       return this.buildNaiveRecycler();
+    }
+    this.hasBuildLastRound = false;
 
     return [];
   }
