@@ -15,7 +15,6 @@ import {
   opponentRecyclers,
   opponentRobots,
   Owner,
-  setMyMatter,
   turn,
   width,
 } from "./State";
@@ -94,9 +93,7 @@ export class RecyclerBuilder {
           myRobots.length <= opponentRobots.length + 5) &&
         myMatter < 50
       ) {
-        actions.push(new BuildAction(recycler.x, recycler.y));
-        myRecyclers.push(recycler);
-        setMyMatter(myMatter - 10);
+        actions.push(new BuildAction(recycler));
       }
     }
     debug("buildNaiveRecycler: ", actions.length);
@@ -116,9 +113,7 @@ export class RecyclerBuilder {
           myMatter >= 10 &&
           robot.units > 1
         ) {
-          actions.push(new BuildAction(block.x, block.y));
-          myRecyclers.push(block);
-          setMyMatter(myMatter - 10);
+          actions.push(new BuildAction(block));
           break;
         }
       }

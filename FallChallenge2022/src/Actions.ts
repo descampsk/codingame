@@ -1,4 +1,7 @@
 /* eslint-disable max-classes-per-file */
+import { Block } from "./Block";
+import { myMatter, myRecyclers, setMyMatter } from "./State";
+
 export interface Action {
   output: () => string;
 }
@@ -34,17 +37,16 @@ export class MoveAction implements Action {
 }
 
 export class BuildAction implements Action {
-  x: number;
-
-  y: number;
-
-  constructor(x: number, y: number) {
-    this.x = x;
-    this.y = y;
+  constructor(private block: Block) {
+    this.block.canSpawn = false;
+    this.block.recycler = true;
+    myRecyclers.push(block);
+    setMyMatter(myMatter - 10);
   }
 
   output() {
-    return `BUILD ${this.x} ${this.y}`;
+    const { x, y } = this.block;
+    return `BUILD ${x} ${y}`;
   }
 }
 
