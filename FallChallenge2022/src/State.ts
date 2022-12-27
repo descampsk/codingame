@@ -4,7 +4,7 @@ import { expensionManager } from "./ExpensionManager";
 import { debug } from "./helpers";
 import { Island } from "./Island";
 
-export const DEBUG = true;
+export const DEBUG = false;
 
 export const debugTime = false;
 

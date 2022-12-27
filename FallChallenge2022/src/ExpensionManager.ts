@@ -137,6 +137,8 @@ export class ExtensionManager {
   }
 
   moveToSeparation() {
+    const start = new Date();
+
     const actions: Action[] = [];
     const robots = myRobots.filter((robot) => !robot.hasMoved);
     const remainingSeparation = this.separation.filter(
@@ -199,6 +201,8 @@ export class ExtensionManager {
         actions.push(new MoveAction(1, bestRobot, bestDestination));
       }
     }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`moveToSeparation time: ${end}ms`);
     return actions;
   }
 }

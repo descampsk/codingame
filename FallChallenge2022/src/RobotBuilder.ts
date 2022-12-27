@@ -33,24 +33,23 @@ export class RobotBuilder {
         block.willBecomeGrass > 1 &&
         block.neighbors.find((a) => a.owner !== Owner.ME)
     );
-    debug("Units", map[2][7].units);
     for (const block of blocksToSpawn) {
       for (const robot of opponentRobots) {
-        debug(
-          "BlockUnits",
-          [block.x, block.y],
-          block.units,
-          myMatter,
-          [robot.x, robot.y],
-          robot.units
-        );
+        // debug(
+        //   "BlockUnits",
+        //   [block.x, block.y],
+        //   block.units,
+        //   myMatter,
+        //   [robot.x, robot.y],
+        //   robot.units
+        // );
         if (
           side * (robot.x - block.x) === 1 &&
           robot.y === block.y &&
           robot.units - block.units > 0 &&
           myMatter >= 10 * (robot.units - block.units)
         ) {
-          debug(
+          this.debug(
             `DefenseSpawn of ${robot.units - block.units} on ${block.x},${
               block.y
             }`

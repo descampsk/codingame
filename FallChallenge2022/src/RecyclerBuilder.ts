@@ -23,6 +23,13 @@ import {
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
 
+  private SHOULD_DEBUG = true;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private debug(...data: any[]) {
+    if (this.SHOULD_DEBUG) debug("[RecyclerBuilder]", ...data);
+  }
+
   isNearOfARecycler(block: Block) {
     for (const recycler of myRecyclers) {
       if (computeManhattanDistance(recycler, block) < 3) {
@@ -130,6 +137,7 @@ export class RecyclerBuilder {
   }
 
   action() {
+    const start = new Date();
     const defensiveActions = this.buildDefensive();
     if (defensiveActions.length) {
       debug("defensiveBuild: ", defensiveActions.length);
@@ -150,6 +158,8 @@ export class RecyclerBuilder {
     }
     this.hasBuildLastRound = false;
 
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`action time:${end}dms`);
     return [];
   }
 }

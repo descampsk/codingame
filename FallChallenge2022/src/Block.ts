@@ -148,9 +148,13 @@ export class Block {
     if (!block) return Infinity;
     const { x, y } = block;
 
-    if (!this.djikstraMap.length) {
-      this.djikstraMap = dijtstraAlgorithm(map, [[this.y, this.x]]);
+    if (this.djikstraMap.length) {
+      return this.djikstraMap[y][x];
     }
+    if (block.djikstraMap.length) {
+      return block.djikstraMap[this.y][this.x];
+    }
+    this.djikstraMap = dijtstraAlgorithm(map, [[this.y, this.x]]);
     return this.djikstraMap[y][x];
   }
 
