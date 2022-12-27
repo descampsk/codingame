@@ -9,10 +9,15 @@ import { myRobots, Owner, side, debugTime } from "./State";
 export class RobotManager {
   public robotsToMove: Block[] = [];
 
+  private SHOULD_DEBUG = false;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private debug(...data: any[]) {
+    if (this.SHOULD_DEBUG) debug("[RobotManager]", ...data);
+  }
+
   naiveMethod() {
     const start = new Date();
-
-    debug("RobotManager - naive mode");
     const actions: Action[] = [];
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
@@ -50,7 +55,7 @@ export class RobotManager {
       }
     }
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) debug("RobotManager naive method time: %dms", end);
+    if (debugTime) this.debug("naiveMethod time: %dms", end);
     return actions;
   }
 
