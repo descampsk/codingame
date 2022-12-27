@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-useless-constructor */
+import { expensionManager } from "./ExpensionManager";
 import { dijtstraAlgorithm } from "./djikstra";
-import { computeManhattanDistance, debug } from "./helpers";
+import { computeManhattanDistance, debug, minBy } from "./helpers";
 import { Island } from "./Island";
 import { height, map, notMyBlocks, Owner, width } from "./State";
 
@@ -156,6 +158,18 @@ export class Block {
     }
     this.djikstraMap = dijtstraAlgorithm(map, [[this.y, this.x]]);
     return this.djikstraMap[y][x];
+  }
+
+  distanceToSeparation() {
+    const { separation } = expensionManager;
+    return (
+      minBy(separation, (block) => this.distanceToBlock(block)).value ||
+      Infinity
+    );
+  }
+
+  public get isOnSeparation() {
+    return !!expensionManager.separation.find((block) => block.equals(this));
   }
 
   getPotentiel(radius: number) {

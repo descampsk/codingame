@@ -14,7 +14,7 @@ import {
 export class ExtensionManager {
   public separation: Block[] = [];
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -182,14 +182,21 @@ export class ExtensionManager {
       const yDirection =
         (bestDestination.y - bestRobot.y) /
         Math.abs(bestDestination.y - bestRobot.y);
-      if (
+      const shouldGoVertically =
         bestDestination.y !== bestRobot.y &&
         map[bestRobot.y + yDirection][bestRobot.x].canMove &&
         map[bestRobot.y + yDirection][bestRobot.x].distanceToBlock(
           bestDestination
         ) ===
-          bestRobot.distanceToBlock(bestDestination) - 1
-      ) {
+          bestRobot.distanceToBlock(bestDestination) - 1;
+      this.debug(
+        "Should go vertically",
+        shouldGoVertically,
+        [bestRobot.x, bestRobot.y],
+        yDirection,
+        [bestDestination.x, bestDestination.y]
+      );
+      if (shouldGoVertically) {
         actions.push(
           new MoveAction(
             1,

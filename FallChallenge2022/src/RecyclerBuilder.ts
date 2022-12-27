@@ -1,6 +1,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
+import { expensionManager } from "./ExpensionManager";
 import { computeManhattanDistance, debug } from "./helpers";
 import {
   blocks,
@@ -11,6 +12,7 @@ import {
   myMatter,
   myRecyclers,
   myRobots,
+  myStartPosition,
   opponentBlocks,
   opponentRecyclers,
   opponentRobots,
@@ -43,6 +45,7 @@ export class RecyclerBuilder {
     const nearCoordinates = [[-1, 0], [1, 0], [0, 1], [0 - 1]];
     const { scrapAmount } = block;
     let total = scrapAmount;
+    let grassCreated = 1;
     for (const nearCoordinate of nearCoordinates) {
       const [x, y] = nearCoordinate;
       const nearBlockX = block.x + x;
@@ -58,12 +61,14 @@ export class RecyclerBuilder {
           nearBlock.scrapAmount > scrapAmount
             ? scrapAmount
             : nearBlock.scrapAmount;
+        if (nearBlock.scrapAmount <= scrapAmount) grassCreated += 1;
       }
     }
     // debug("computeTotalGain", total, block.position);
     return {
       gains: total,
       gainsPerTurn: total / scrapAmount,
+      grassCreated,
     };
   }
 
@@ -100,12 +105,25 @@ export class RecyclerBuilder {
           block.island?.owner !== Owner.ME
       )
       .sort((a, b) => {
-        const { gains: gainA, gainsPerTurn: gainsPerTurnA } =
-          this.computeGains(a);
-        const { gains: gainB, gainsPerTurn: gainsPerTurnB } =
-          this.computeGains(b);
+        const {
+          gains: gainA,
+          gainsPerTurn: gainsPerTurnA,
+          grassCreated: grassCreatedA,
+        } = this.computeGains(a);
+        const {
+          gains: gainB,
+          gainsPerTurn: gainsPerTurnB,
+          grassCreated: grassCreatedB,
+        } = this.computeGains(b);
+        const aIsSeparation = a.isOnSeparation;
+        const bIsSeparation = b.isOnSeparation;
+        if (aIsSeparation && !bIsSeparation) return -1;
+        if (bIsSeparation && !aIsSeparation) return 1;
+        if (grassCreatedA !== grassCreatedB)
+          return grassCreatedA - grassCreatedB;
         if (gainsPerTurnA !== gainsPerTurnB)
           return gainsPerTurnB - gainsPerTurnA;
+
         return gainB - gainA;
       });
     if (possibleRecyclers.length) {
@@ -122,7 +140,13 @@ export class RecyclerBuilder {
     const start = new Date();
 
     const actions: Action[] = [];
-    const possibleRecyclers = myBlocks.filter((block) => block.canBuild);
+    const possibleRecyclers = myBlocks
+      .filter((block) => block.canBuild)
+      .sort(
+        (a, b) =>
+          computeManhattanDistance(a, myStartPosition) -
+          computeManhattanDistance(b, myStartPosition)
+      );
     for (const block of possibleRecyclers) {
       for (const robot of opponentRobots) {
         if (

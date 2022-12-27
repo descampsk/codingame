@@ -39,6 +39,7 @@ export class RobotManager {
               (b.owner === Owner.OPPONENT ? b.units : 0) -
               (a.owner === Owner.OPPONENT ? a.units : 0)
             );
+
           if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
         })
