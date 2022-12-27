@@ -191,22 +191,12 @@ export class ExtensionManager {
         actions.push(
           new MoveAction(
             1,
-            bestRobot.x,
-            bestRobot.y,
-            bestRobot.x,
-            bestRobot.y + yDirection
+            bestRobot,
+            map[bestRobot.y + yDirection][bestRobot.x]
           )
         );
       } else {
-        actions.push(
-          new MoveAction(
-            1,
-            bestRobot.x,
-            bestRobot.y,
-            bestDestination.x,
-            bestDestination.y
-          )
-        );
+        actions.push(new MoveAction(1, bestRobot, bestDestination));
       }
     }
     return actions;

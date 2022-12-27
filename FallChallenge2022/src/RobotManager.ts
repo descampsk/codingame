@@ -3,18 +3,8 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
-import { computeManhattanDistance, debug, minBy } from "./helpers";
-import {
-  myRobots,
-  notMyBlocks,
-  Owner,
-  side,
-  width,
-  blocks,
-  debugTime,
-  myStartPosition,
-  opponentStartPosition,
-} from "./State";
+import { debug } from "./helpers";
+import { myRobots, Owner, side, debugTime } from "./State";
 
 export class RobotManager {
   public robotsToMove: Block[] = [];
@@ -26,34 +16,12 @@ export class RobotManager {
     const actions: Action[] = [];
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
-      //   debug("Block", robot.x, robot.y, robot.neighbors.length);
       const nearestEmptyBlocks = robot.neighbors
         .sort((a, b) => {
           const potentielRadius =
             robot.island?.owner === Owner.ME ? Infinity : 5;
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
-
-          //   debug("potentielA", a.x, a.y, potentielA);
-          //   debug("potentielB", b.x, b.y, potentielB);
-
-          const distanceToMyStartA = computeManhattanDistance(
-            a,
-            myStartPosition
-          );
-          const distanceToMyStartB = computeManhattanDistance(
-            b,
-            myStartPosition
-          );
-
-          const distanceToOpponentStartA = computeManhattanDistance(
-            a,
-            opponentStartPosition
-          );
-          const distanceToOpponentStartB = computeManhattanDistance(
-            b,
-            opponentStartPosition
-          );
 
           // Ordre de priorité
           // - si case ennemie, on tue les robots en premier
@@ -78,15 +46,7 @@ export class RobotManager {
       const nearestEmptyBlock = nearestEmptyBlocks[0];
 
       if (nearestEmptyBlock) {
-        actions.push(
-          new MoveAction(
-            1,
-            robot.x,
-            robot.y,
-            nearestEmptyBlock.x,
-            nearestEmptyBlock.y
-          )
-        );
+        actions.push(new MoveAction(1, robot, nearestEmptyBlock));
       }
     }
     const end = new Date().getTime() - start.getTime();

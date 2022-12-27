@@ -4,6 +4,8 @@ import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
 import { debug, minBy } from "./helpers";
 import {
+  debugTime,
+  map,
   myBlocks,
   myMatter,
   notMyBlocks,
@@ -18,6 +20,53 @@ export class RobotBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
     if (this.SHOULD_DEBUG) debug("[RobotBuilder]", ...data);
+  }
+
+  computeDefensiveSpawn() {
+    const start = new Date();
+
+    const actions: SpawnAction[] = [];
+    const blocksToSpawn = myBlocks.filter(
+      (block) =>
+        block.canSpawn &&
+        (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
+        block.willBecomeGrass > 1 &&
+        block.neighbors.find((a) => a.owner !== Owner.ME)
+    );
+    debug("Units", map[2][7].units);
+    for (const block of blocksToSpawn) {
+      for (const robot of opponentRobots) {
+        debug(
+          "BlockUnits",
+          [block.x, block.y],
+          block.units,
+          myMatter,
+          [robot.x, robot.y],
+          robot.units
+        );
+        if (
+          side * (robot.x - block.x) === 1 &&
+          robot.y === block.y &&
+          robot.units - block.units > 0 &&
+          myMatter >= 10 * (robot.units - block.units)
+        ) {
+          debug(
+            `DefenseSpawn of ${robot.units - block.units} on ${block.x},${
+              block.y
+            }`
+          );
+          actions.push(new SpawnAction(robot.units - block.units, block));
+        }
+      }
+    }
+    this.debug(
+      "computeDefensiveSpawn",
+      actions.length,
+      actions.map((action) => [action.block.x, action.block.y])
+    );
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug("computeDefensiveSpawn time: %dms", end);
+    return actions;
   }
 
   computeNormalSpawn() {
@@ -91,17 +140,15 @@ export class RobotBuilder {
   }
 
   action() {
-    const actions: Action[] = [];
+    const actions: Action[] = this.computeDefensiveSpawn();
     const blocksToSpawn: Block[] = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;
-    let predictedMatter = myMatter;
-    while (predictedMatter >= 10 && blocksToSpawn[blockToSpawnIndex]) {
+    while (myMatter >= 10 && blocksToSpawn[blockToSpawnIndex]) {
       const blockToSpawn = blocksToSpawn[blockToSpawnIndex];
-      actions.push(new SpawnAction(1, blockToSpawn.x, blockToSpawn.y));
+      actions.push(new SpawnAction(1, blockToSpawn));
       blockToSpawnIndex += 1;
       if (blockToSpawnIndex === blocksToSpawn.length) blockToSpawnIndex = 0;
-      predictedMatter -= 10;
     }
 
     this.debug("Spawns", actions.length);

@@ -1,38 +1,25 @@
 /* eslint-disable max-classes-per-file */
 import { Block } from "./Block";
-import { myMatter, myRecyclers, setMyMatter } from "./State";
+import { map, myMatter, myRecyclers, setMyMatter } from "./State";
+import { debug } from "./helpers";
 
 export interface Action {
   output: () => string;
 }
 
 export class MoveAction implements Action {
-  amount: number;
-
-  fromX: number;
-
-  fromY: number;
-
-  toX: number;
-
-  toY: number;
-
   constructor(
-    amount: number,
-    fromX: number,
-    fromY: number,
-    toX: number,
-    toY: number
+    public amount: number,
+    public origin: Block,
+    public destination: Block
   ) {
-    this.amount = amount;
-    this.fromX = fromX;
-    this.fromY = fromY;
-    this.toX = toX;
-    this.toY = toY;
+    this.origin.units -= this.amount;
+    if (this.origin.owner === this.destination.owner)
+      this.destination.units += this.amount;
   }
 
   output() {
-    return `MOVE ${this.amount} ${this.fromX} ${this.fromY} ${this.toX} ${this.toY}`;
+    return `MOVE ${this.amount} ${this.origin.x} ${this.origin.y} ${this.destination.x} ${this.destination.y}`;
   }
 }
 
@@ -51,20 +38,16 @@ export class BuildAction implements Action {
 }
 
 export class SpawnAction implements Action {
-  amount: number;
+  constructor(private amount: number, public block: Block) {
+    this.block.units += amount;
+    setMyMatter(myMatter - 10 * amount);
 
-  x: number;
-
-  y: number;
-
-  constructor(amount: number, x: number, y: number) {
     this.amount = amount;
-    this.x = x;
-    this.y = y;
   }
 
   output() {
-    return `SPAWN ${this.amount} ${this.x} ${this.y}`;
+    const { x, y } = this.block;
+    return `SPAWN ${this.amount} ${x} ${y}`;
   }
 }
 
