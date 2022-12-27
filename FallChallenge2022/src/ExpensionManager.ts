@@ -14,7 +14,7 @@ import {
 export class ExtensionManager {
   public separation: Block[] = [];
 
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {

@@ -67,6 +67,28 @@ export class RecyclerBuilder {
     };
   }
 
+  shouldBuildNaiveRecycler() {
+    const notGrassBlocks = blocks.filter((block) => !block.isGrass);
+    const should =
+      turn > 2 &&
+      !this.hasBuildLastRound &&
+      notGrassBlocks.length >= 80 &&
+      (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
+      // Lost 100 seats in the Leaderboard if I remove this condition
+      myMatter < 40;
+    this.debug("shouldBuildNaiveRecycler", should, {
+      turn,
+      hasBuildLastRound: this.hasBuildLastRound,
+      notGrassBlocks: notGrassBlocks.length,
+      opponentRecyclers: opponentRecyclers.length,
+      myRecyclers: myRecyclers.length,
+      myRobots: myRobots.length,
+      opponentRobots: opponentRobots.length,
+      myMatter,
+    });
+    return should;
+  }
+
   buildNaiveRecycler() {
     const actions: BuildAction[] = [];
     const possibleRecyclers = myBlocks
@@ -143,16 +165,8 @@ export class RecyclerBuilder {
       debug("defensiveBuild: ", defensiveActions.length);
       return defensiveActions;
     }
-    const notGrassBlocks = blocks.filter((block) => !block.isGrass);
-    if (
-      turn > 2 &&
-      !this.hasBuildLastRound &&
-      (notGrassBlocks.length >= 80 ||
-        opponentRecyclers.length > myRecyclers.length) &&
-      (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
-      // Lost 100 seats in the Leaderboard if I remove this condition
-      myMatter < 40
-    ) {
+
+    if (this.shouldBuildNaiveRecycler()) {
       this.hasBuildLastRound = true;
       return this.buildNaiveRecycler();
     }

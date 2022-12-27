@@ -2,12 +2,13 @@
 /* eslint-disable class-methods-use-this */
 import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
-import { debug, minBy } from "./helpers";
+import { computeManhattanDistance, debug, minBy } from "./helpers";
 import {
   debugTime,
   map,
   myBlocks,
   myMatter,
+  myStartPosition,
   notMyBlocks,
   opponentRobots,
   Owner,
@@ -15,7 +16,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -26,13 +27,20 @@ export class RobotBuilder {
     const start = new Date();
 
     const actions: SpawnAction[] = [];
-    const blocksToSpawn = myBlocks.filter(
-      (block) =>
-        block.canSpawn &&
-        (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
-        block.willBecomeGrass > 1 &&
-        block.neighbors.find((a) => a.owner !== Owner.ME)
-    );
+    // On sort sur les cases qui sont le plus proche de mon départ car ce sont celles à défendre en premier
+    const blocksToSpawn = myBlocks
+      .filter(
+        (block) =>
+          block.canSpawn &&
+          (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
+          block.willBecomeGrass > 1 &&
+          block.neighbors.find((a) => a.owner !== Owner.ME)
+      )
+      .sort(
+        (a, b) =>
+          computeManhattanDistance(a, myStartPosition) -
+          computeManhattanDistance(b, myStartPosition)
+      );
     for (const block of blocksToSpawn) {
       for (const robot of opponentRobots) {
         // debug(
@@ -100,14 +108,6 @@ export class RobotBuilder {
         }
       }
 
-      const distanceToNearestOpponentA = minBy(opponentRobots, (robot) =>
-        a.distanceToBlock(robot)
-      ).value!;
-
-      const distanceToNearestOpponentB = minBy(opponentRobots, (robot) =>
-        b.distanceToBlock(robot)
-      ).value!;
-
       const potentielRadius = 5;
       const potentielA = a.getPotentiel(potentielRadius);
       const potentielB = b.getPotentiel(potentielRadius);
@@ -115,22 +115,12 @@ export class RobotBuilder {
       // Ordre de priorité
       // - distance à une casse qui ne m'appartient pas
       // - on prend une case ennemie avant vide avant moi
-      // - on prend celle qui a un ennemie si on est à 1 de distance
-      // - on prend celle qui est dans la direction de ma base si un ennemie est à côté
       // - on prend le meilleur potentiel
       // - à nombre de voisins égals, on prend celle qui a le moins d'unité sur la case
       // - on prend celui qui est le plus de l'autre côté
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
       if (nearestABlock.owner !== nearestBBlock.owner)
         return nearestABlock.compareOwner(nearestBBlock);
-      if (
-        distanceToNearestOpponentA === 1 ||
-        distanceToNearestOpponentB === 1
-      ) {
-        if (distanceToNearestOpponentA !== distanceToNearestOpponentB)
-          return distanceToNearestOpponentA - distanceToNearestOpponentB;
-        return side * (a.x - b.x);
-      }
       if (potentielA !== potentielB) return potentielB - potentielA;
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);
