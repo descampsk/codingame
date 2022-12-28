@@ -26,6 +26,7 @@ export class MoveAction implements Action {
 export class BuildAction implements Action {
   constructor(private block: Block) {
     this.block.canSpawn = false;
+    this.block.canBuild = false;
     this.block.recycler = true;
     myRecyclers.push(block);
     setMyMatter(myMatter - 10);
