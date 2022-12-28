@@ -20,7 +20,7 @@ export class IA {
 
   chooseAction() {
     const recyclerActions = recyclerBuilder.action();
-    const moveToSeparationActions = expensionManager.moveToSeparation();
+    const moveToSeparationActions = expensionManager.moveAndBuildToSeparation();
     const robotActions = robotManager.action();
     const robotBuilderActions = robotBuilder.action();
     this.actions = [

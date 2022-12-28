@@ -102,7 +102,7 @@ export class Block {
     return ownerBlockDifference > 3;
   }
 
-  updateNeighbors() {
+  updateNeighbors(map: Block[][]) {
     this.neighbors = [];
     this.neighborsWithRecycler = [];
     const { x, y } = this;
@@ -223,5 +223,22 @@ export class Block {
       return -1;
     }
     return 0;
+  }
+
+  static createCopyOfMap(map: Block[][]) {
+    const copy: Block[][] = [];
+    for (let i = 0; i < map.length; i++) {
+      const blocks: Block[] = [];
+      for (let j = 0; j < map[i].length; j++) {
+        blocks.push(Block.clone(map[i][j]));
+      }
+      copy.push(blocks);
+    }
+    for (let i = 0; i < map.length; i++) {
+      for (let j = 0; j < map[i].length; j++) {
+        copy[i][j].updateNeighbors(copy);
+      }
+    }
+    return copy;
   }
 }

@@ -6,6 +6,7 @@ import {
   debugTime,
   map,
   myBlocks,
+  myMatter,
   myRobots,
   myStartPosition,
   opponentStartPosition,
@@ -138,14 +139,72 @@ export class ExtensionManager {
     if (debugTime) this.debug("computeSeparation time: %dms", end);
   }
 
-  moveToSeparation() {
+  moveAndBuildToSeparation() {
     const start = new Date();
+    const actions: Action[] = [];
+    const remainingSeparation = this.separation
+      .filter((block) => block.owner === Owner.NONE && block.canMove)
+      .sort(
+        (a, b) =>
+          computeManhattanDistance(a, myStartPosition) -
+          computeManhattanDistance(b, myStartPosition)
+      );
+    actions.push(
+      ...this.moveToSeparation(remainingSeparation),
+      ...this.buildToSeparation(remainingSeparation)
+    );
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`moveAndBuildToSeparation time: ${end}ms`);
+    return actions;
+  }
 
+  buildToSeparation(remainingSeparation: Block[]) {
+    const start = new Date();
+    const actions: Action[] = [];
+    // On va créer des robots pour les destinations manquantes
+    if (remainingSeparation.length) {
+      const blocksToSpawn = myBlocks.filter(
+        (block) =>
+          block.canSpawn &&
+          (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
+          block.willBecomeGrass > 1 &&
+          block.neighbors.find((a) => a.owner !== Owner.ME)
+      );
+      while (remainingSeparation.length && myMatter >= 10) {
+        let bestDestination = remainingSeparation[0];
+        let bestDestinationIndex = 0;
+        let minDistance = Infinity;
+        let bestBlockToSpawn = myBlocks[0];
+        for (const [
+          indexDestination,
+          destination,
+        ] of remainingSeparation.entries()) {
+          for (const block of blocksToSpawn) {
+            const distance = block.distanceToBlock(destination);
+            if (distance < minDistance) {
+              minDistance = distance;
+              bestDestination = destination;
+              bestDestinationIndex = indexDestination;
+              bestBlockToSpawn = block;
+            }
+          }
+        }
+        this.debug(
+          `BestBlock to spawn ${bestBlockToSpawn.x},${bestBlockToSpawn.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
+        );
+        remainingSeparation.splice(bestDestinationIndex, 1);
+        actions.push(new SpawnAction(1, bestBlockToSpawn));
+      }
+    }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`buildToSeparation time: ${end}ms`);
+    return actions;
+  }
+
+  moveToSeparation(remainingSeparation: Block[]) {
+    const start = new Date();
     const actions: Action[] = [];
     const robots = myRobots.filter((robot) => !robot.hasMoved);
-    const remainingSeparation = this.separation.filter(
-      (block) => block.owner === Owner.NONE && block.canMove
-    );
 
     while (robots.length && remainingSeparation.length) {
       let bestDestination = remainingSeparation[0];
@@ -153,10 +212,9 @@ export class ExtensionManager {
       let minDistance = Infinity;
       let bestRobot = robots[0];
       let bestRobotIndex = 0;
-      for (const [
-        indexDestination,
-        destination,
-      ] of remainingSeparation.entries()) {
+      for (const [indexDestination, destination] of remainingSeparation
+        .slice(0, robots.length * 2)
+        .entries()) {
         for (const [indexRobot, robot] of robots.entries()) {
           const distance = robot.distanceToBlock(destination);
           if (
@@ -211,35 +269,6 @@ export class ExtensionManager {
       }
     }
 
-    // On va créer des robots pour les destinations manquantes
-    if (remainingSeparation.length) {
-      while (remainingSeparation.length) {
-        let bestDestination = remainingSeparation[0];
-        let bestDestinationIndex = 0;
-        let minDistance = Infinity;
-        let bestBlockToSpawn = myBlocks[0];
-        for (const [
-          indexDestination,
-          destination,
-        ] of remainingSeparation.entries()) {
-          for (const block of myBlocks) {
-            const distance = block.distanceToBlock(destination);
-            if (distance < minDistance) {
-              minDistance = distance;
-              bestDestination = destination;
-              bestDestinationIndex = indexDestination;
-              bestBlockToSpawn = block;
-            }
-          }
-        }
-        this.debug(
-          `BestBlock to spawn ${bestBlockToSpawn.x},${bestBlockToSpawn.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
-        );
-        remainingSeparation.splice(bestDestinationIndex, 1);
-        actions.push(new SpawnAction(1, bestBlockToSpawn));
-      }
-    }
-
     const end = new Date().getTime() - start.getTime();
     if (debugTime) this.debug(`moveToSeparation time: ${end}ms`);
     return actions;
@@ -253,18 +282,6 @@ export class ExtensionManager {
     this.debug(
       `predictBestMovesToSeparation for ${minDistanceToSeparation} turns`
     );
-  }
-
-  static createCopyOfMap(map: Block[][]) {
-    const copy: Block[][] = [];
-    for (let i = 0; i < map.length; i++) {
-      const blocks: Block[] = [];
-      for (let j = 0; j < map[i].length; j++) {
-        blocks.push(Block.clone(map[i][j]));
-      }
-      copy.push(blocks);
-    }
-    return copy;
   }
 }
 

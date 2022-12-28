@@ -6,7 +6,7 @@ import { debug } from "./helpers";
 import { blocks, debugTime, Owner } from "./State";
 
 export class Island {
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -58,17 +58,18 @@ export class Island {
     return island;
   }
 
-  static findIslands() {
+  static findIslands(map: Block[][]) {
     const start = new Date();
 
-    let blockWithoutIsland = blocks.find(
+    const flapMap = map.flat();
+    let blockWithoutIsland = flapMap.find(
       (block) => !block.island && block.canMove
     );
     const islands: Island[] = [];
     while (blockWithoutIsland) {
       const island = Island.createIsland(blockWithoutIsland);
       islands.push(island);
-      blockWithoutIsland = blocks.find(
+      blockWithoutIsland = flapMap.find(
         (block) => !block.island && block.canMove
       );
     }

@@ -2,11 +2,13 @@
 import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { expensionManager } from "./ExpensionManager";
+import { Island } from "./Island";
 import { computeManhattanDistance, debug } from "./helpers";
 import {
   blocks,
   debugTime,
   height,
+  islands,
   map,
   myBlocks,
   myMatter,
@@ -25,7 +27,7 @@ import {
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -70,6 +72,31 @@ export class RecyclerBuilder {
       gainsPerTurn: total / scrapAmount,
       grassCreated,
     };
+  }
+
+  willCreateNewIsland(block: Block) {
+    const copyMap = Block.createCopyOfMap(map);
+    copyMap[block.y][block.x].recycler = true;
+    for (const neighbor of block.neighbors) {
+      if (neighbor.scrapAmount <= block.scrapAmount) {
+        copyMap[neighbor.y][neighbor.x].scrapAmount = 0;
+      }
+    }
+    copyMap.flat().forEach((block) => block.updateNeighbors(copyMap));
+    const newIslands = Island.findIslands(copyMap);
+    if (newIslands.length === islands.length) return false;
+
+    for (const island of newIslands) {
+      if (
+        island.owner === Owner.NONE &&
+        island.blocks.find((islandBlock) =>
+          block.neighbors.find((neighbor) => neighbor.equals(islandBlock))
+        )
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 
   shouldBuildNaiveRecycler() {
@@ -130,10 +157,13 @@ export class RecyclerBuilder {
 
         return gainB - gainA;
       });
+
     if (possibleRecyclers.length) {
-      const recycler = possibleRecyclers[0];
-      if (recycler) {
-        actions.push(new BuildAction(recycler));
+      for (const recycler of possibleRecyclers) {
+        if (!this.willCreateNewIsland(recycler)) {
+          actions.push(new BuildAction(recycler));
+          break;
+        }
       }
     }
     debug("buildNaiveRecycler: ", actions.length);
@@ -198,18 +228,23 @@ export class RecyclerBuilder {
     const start = new Date();
     const defensiveActions = this.buildDefensive();
     if (defensiveActions.length) {
-      debug("defensiveBuild: ", defensiveActions.length);
+      this.debug("defensiveBuild: ", defensiveActions.length);
+      const end = new Date().getTime() - start.getTime();
+      if (debugTime) this.debug(`action time: ${end} ms`);
       return defensiveActions;
     }
 
     if (this.shouldBuildNaiveRecycler()) {
       this.hasBuildLastRound = true;
-      return this.buildNaiveRecycler();
+      const actions = this.buildNaiveRecycler();
+      const end = new Date().getTime() - start.getTime();
+      if (debugTime) this.debug(`action time: ${end} ms`);
+      return actions;
     }
     this.hasBuildLastRound = false;
 
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`action time:${end}dms`);
+    if (debugTime) this.debug(`action time: ${end} ms`);
     return [];
   }
 }

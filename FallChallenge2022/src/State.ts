@@ -6,7 +6,7 @@ import { Island } from "./Island";
 
 export const DEBUG = true;
 
-export const debugTime = false;
+export const debugTime = true;
 
 export let turn = 0;
 
@@ -156,7 +156,7 @@ export const computeData = () => {
   opponentRecyclers = [];
 
   blocks.forEach((block) => {
-    block.updateNeighbors();
+    block.updateNeighbors(map);
     if (block.owner === Owner.ME) myBlocks.push(block);
     if (block.owner !== Owner.ME && block.canMove) notMyBlocks.push(block);
     if (block.owner === Owner.OPPONENT) opponentBlocks.push(block);
@@ -220,7 +220,7 @@ export const refresh = () => {
   //   debug("Block:", map[5][2].getPotentiel(5));
   //   debug("Block:", map[5][1].getPotentiel(5));
 
-  islands = Island.findIslands();
+  islands = Island.findIslands(map);
   debug(
     "[Islands]",
     islands.length,
