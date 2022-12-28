@@ -3,8 +3,16 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
-import { debug } from "./helpers";
-import { myRobots, Owner, side, debugTime } from "./State";
+import { computeManhattanDistance, debug } from "./helpers";
+import {
+  myRobots,
+  Owner,
+  side,
+  debugTime,
+  myStartPosition,
+  opponentRobots,
+  myMatter,
+} from "./State";
 
 export class RobotManager {
   public robotsToMove: Block[] = [];
@@ -14,6 +22,45 @@ export class RobotManager {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
     if (this.SHOULD_DEBUG) debug("[RobotManager]", ...data);
+  }
+
+  computeDefensiveMove() {
+    const start = new Date();
+
+    const actions: MoveAction[] = [];
+    // On sort sur les robots qui sont le plus proche de mon départ car ce sont celles à défendre en premier
+    const myRobotsToDef = myRobots
+      .filter(
+        (robot) =>
+          (robot.island?.owner !== Owner.ME || !robot.island?.hasRobot) &&
+          robot.willBecomeGrass > 1 &&
+          robot.neighbors.find((a) => a.owner !== Owner.ME)
+      )
+      .sort(
+        (a, b) =>
+          computeManhattanDistance(a, myStartPosition) -
+          computeManhattanDistance(b, myStartPosition)
+      );
+    for (const myRobot of myRobotsToDef) {
+      for (const opponentRobot of opponentRobots) {
+        if (
+          side * (opponentRobot.x - myRobot.x) === 1 &&
+          myRobot.y === opponentRobot.y &&
+          opponentRobot.units - myRobot.units > 0 &&
+          myMatter >= 10 * opponentRobot.units - myRobot.units
+        ) {
+          this.debug(
+            `DefenseMove of ${opponentRobot.units - myRobot.units} on ${
+              myRobot.x
+            },${myRobot.y}`
+          );
+          myRobot.hasMoved = true;
+        }
+      }
+    }
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`computeDefensiveMove time: ${end}ms`);
+    return actions;
   }
 
   naiveMethod() {
