@@ -33,7 +33,6 @@ export class RobotManager {
           // - ennemie avant vide
           // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
-          if (a.owner !== b.owner) return a.compareOwner(b);
           if (a.owner === Owner.OPPONENT || b.owner === Owner.OPPONENT)
             return (
               (b.owner === Owner.OPPONENT ? b.units : 0) -

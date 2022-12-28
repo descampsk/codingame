@@ -14,6 +14,8 @@ import {
 export class ExtensionManager {
   public separation: Block[] = [];
 
+  public mapOwner: { value: number; owner: Owner }[][] = [];
+
   private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -25,23 +27,21 @@ export class ExtensionManager {
     if (this.separation.length) return;
     const start = new Date();
 
-    const distances: { value: number; owner: Owner }[][] = new Array(map.length)
-      .fill(null)
-      .map(() =>
-        new Array(map[0].length).fill({
-          value: Infinity,
-          owner: Owner.NONE,
-        })
-      );
+    this.mapOwner = new Array(map.length).fill(null).map(() =>
+      new Array(map[0].length).fill({
+        value: Infinity,
+        owner: Owner.NONE,
+      })
+    );
     const startingBlocks = [
       [myStartPosition.y, myStartPosition.x],
       [opponentStartPosition.y, opponentStartPosition.x],
     ];
-    distances[myStartPosition.y][myStartPosition.x] = {
+    this.mapOwner[myStartPosition.y][myStartPosition.x] = {
       value: 0,
       owner: Owner.ME,
     };
-    distances[opponentStartPosition.y][opponentStartPosition.x] = {
+    this.mapOwner[opponentStartPosition.y][opponentStartPosition.x] = {
       value: 0,
       owner: Owner.OPPONENT,
     };
@@ -68,23 +68,24 @@ export class ExtensionManager {
             map[xToUpdate][yToUpdate].canMove
           ) {
             if (!visited[xToUpdate][yToUpdate]) {
-              const oldValue = distances[xToUpdate][yToUpdate].value;
-              const newValue = 1 + distances[x][y].value;
+              const oldValue = this.mapOwner[xToUpdate][yToUpdate].value;
+              const newValue = 1 + this.mapOwner[x][y].value;
               if (newValue < oldValue) {
-                distances[xToUpdate][yToUpdate] = {
+                this.mapOwner[xToUpdate][yToUpdate] = {
                   value: newValue,
-                  owner: distances[x][y].owner,
+                  owner: this.mapOwner[x][y].owner,
                 };
                 nextBlocks.push([xToUpdate, yToUpdate, newValue]);
                 visited[xToUpdate][yToUpdate] = 1;
               }
             } else if (
-              1 + distances[x][y].value ===
-                distances[xToUpdate][yToUpdate].value &&
-              distances[xToUpdate][yToUpdate].owner !== distances[x][y].owner &&
-              distances[x][y].owner !== Owner.BOTH
+              1 + this.mapOwner[x][y].value ===
+                this.mapOwner[xToUpdate][yToUpdate].value &&
+              this.mapOwner[xToUpdate][yToUpdate].owner !==
+                this.mapOwner[x][y].owner &&
+              this.mapOwner[x][y].owner !== Owner.BOTH
             ) {
-              distances[xToUpdate][yToUpdate].owner = Owner.BOTH;
+              this.mapOwner[xToUpdate][yToUpdate].owner = Owner.BOTH;
             }
           }
         }
@@ -97,9 +98,9 @@ export class ExtensionManager {
     const bothOwnerBlocks: Block[] = [];
     const wall: Block[] = [];
 
-    for (let i = 0; i < distances.length; i++) {
-      for (let j = 0; j < distances[i].length; j++) {
-        const distance = distances[i][j];
+    for (let i = 0; i < this.mapOwner.length; i++) {
+      for (let j = 0; j < this.mapOwner[i].length; j++) {
+        const distance = this.mapOwner[i][j];
         if (distance.owner === Owner.BOTH) {
           bothOwnerBlocks.push(map[i][j]);
         }
@@ -107,8 +108,8 @@ export class ExtensionManager {
         const { neighbors } = map[i][j];
         for (const neighbor of neighbors) {
           if (
-            distances[i][j].owner === Owner.ME &&
-            distances[neighbor.y][neighbor.x].owner === Owner.OPPONENT
+            this.mapOwner[i][j].owner === Owner.ME &&
+            this.mapOwner[neighbor.y][neighbor.x].owner === Owner.OPPONENT
           )
             wall.push(map[i][j]);
         }

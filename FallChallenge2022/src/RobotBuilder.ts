@@ -112,9 +112,6 @@ export class RobotBuilder {
       const potentielA = a.getPotentiel(potentielRadius);
       const potentielB = b.getPotentiel(potentielRadius);
 
-      const distanceToSeparationA = a.distanceToSeparation();
-      const distanceToSeparationB = b.distanceToSeparation();
-
       // Ordre de priorité
       // - distance à une casse qui ne m'appartient pas
       // - on prend une case ennemie avant vide avant moi
@@ -124,8 +121,6 @@ export class RobotBuilder {
       if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
       if (nearestABlock.owner !== nearestBBlock.owner)
         return nearestABlock.compareOwner(nearestBBlock);
-      // if (distanceToSeparationA !== distanceToSeparationB)
-      //   return distanceToSeparationA - distanceToSeparationB;
       if (potentielA !== potentielB) return potentielB - potentielA;
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);

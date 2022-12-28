@@ -2,7 +2,7 @@
 /* eslint-disable no-useless-constructor */
 import { expensionManager } from "./ExpensionManager";
 import { dijtstraAlgorithm } from "./djikstra";
-import { computeManhattanDistance, debug, minBy } from "./helpers";
+import { minBy } from "./helpers";
 import { Island } from "./Island";
 import { height, map, notMyBlocks, Owner, width } from "./State";
 
@@ -160,16 +160,20 @@ export class Block {
     return this.djikstraMap[y][x];
   }
 
-  distanceToSeparation() {
+  public get distanceToSeparation() {
     const { separation } = expensionManager;
-    return (
-      minBy(separation, (block) => this.distanceToBlock(block)).value ||
-      Infinity
-    );
+    const distance = minBy(separation, (block) =>
+      this.distanceToBlock(block)
+    ).value;
+    return distance !== null ? distance : Infinity;
   }
 
   public get isOnSeparation() {
     return !!expensionManager.separation.find((block) => block.equals(this));
+  }
+
+  public get initialOwner() {
+    return expensionManager.mapOwner[this.y][this.x].owner;
   }
 
   getPotentiel(radius: number) {
