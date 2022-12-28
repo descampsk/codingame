@@ -91,20 +91,27 @@ export class RobotBuilder {
       blocksToSpawn.map((block) => [block.x, block.y])
     );
     blocksToSpawn.sort((a, b) => {
-      let minAToEmpty = Infinity;
-      let minBToEmpty = Infinity;
-      let nearestABlock = a;
-      let nearestBBlock = b;
+      let minAToNone = Infinity;
+      let minBToNone = Infinity;
+      let minAToOpponent = Infinity;
+      let minBToOpponent = Infinity;
       for (const emptyBlock of notMyBlocks) {
         const distanceA = a.distanceToBlock(emptyBlock);
         const distanceB = b.distanceToBlock(emptyBlock);
-        if (distanceA < minAToEmpty) {
-          minAToEmpty = distanceA;
-          nearestABlock = emptyBlock;
-        }
-        if (distanceB < minBToEmpty) {
-          minBToEmpty = distanceB;
-          nearestBBlock = emptyBlock;
+        if (emptyBlock.owner === Owner.OPPONENT) {
+          if (distanceA < minAToOpponent) {
+            minAToOpponent = distanceA;
+          }
+          if (distanceB < minBToOpponent) {
+            minBToOpponent = distanceB;
+          }
+        } else {
+          if (distanceA < minAToNone) {
+            minAToNone = distanceA;
+          }
+          if (distanceB < minBToNone) {
+            minBToNone = distanceB;
+          }
         }
       }
 
@@ -113,14 +120,15 @@ export class RobotBuilder {
       const potentielB = b.getPotentiel(potentielRadius);
 
       // Ordre de priorité
-      // - distance à une casse qui ne m'appartient pas
-      // - on prend une case ennemie avant vide avant moi
+      // - distance à une case ennemie
+      // - distance à une case vide
       // - on prend le meilleur potentiel
-      // - à nombre de voisins égals, on prend celle qui a le moins d'unité sur la case
+      // - on prend celle qui a le moins d'unité sur la case
       // - on prend celui qui est le plus de l'autre côté
-      if (minAToEmpty !== minBToEmpty) return minAToEmpty - minBToEmpty;
-      if (nearestABlock.owner !== nearestBBlock.owner)
-        return nearestABlock.compareOwner(nearestBBlock);
+      if (minAToOpponent !== minBToOpponent)
+        return minAToOpponent - minBToOpponent;
+      if (minAToOpponent === Infinity && minAToNone !== minBToNone)
+        return minAToNone - minBToNone;
       if (potentielA !== potentielB) return potentielB - potentielA;
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);

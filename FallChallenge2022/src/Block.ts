@@ -37,6 +37,20 @@ export class Block {
     return this.x === block.x && this.y === block.y;
   }
 
+  static clone(block: Block) {
+    return new Block(
+      block.x,
+      block.y,
+      block.scrapAmount,
+      block.owner,
+      block.units,
+      block.recycler,
+      block.canBuild,
+      block.canSpawn,
+      block.inRangeOfRecycler
+    );
+  }
+
   public get canMove(): boolean {
     return !this.recycler && this.scrapAmount > 0;
   }

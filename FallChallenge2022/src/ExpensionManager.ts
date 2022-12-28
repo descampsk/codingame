@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Action, MoveAction } from "./Actions";
+import { Action, MoveAction, SpawnAction } from "./Actions";
 import { Block } from "./Block";
 import { computeManhattanDistance, debug, minBy } from "./helpers";
 import {
   debugTime,
   map,
+  myBlocks,
   myRobots,
   myStartPosition,
   opponentStartPosition,
@@ -209,9 +210,61 @@ export class ExtensionManager {
         actions.push(new MoveAction(1, bestRobot, bestDestination));
       }
     }
+
+    // On va créer des robots pour les destinations manquantes
+    if (remainingSeparation.length) {
+      while (remainingSeparation.length) {
+        let bestDestination = remainingSeparation[0];
+        let bestDestinationIndex = 0;
+        let minDistance = Infinity;
+        let bestBlockToSpawn = myBlocks[0];
+        for (const [
+          indexDestination,
+          destination,
+        ] of remainingSeparation.entries()) {
+          for (const block of myBlocks) {
+            const distance = block.distanceToBlock(destination);
+            if (distance < minDistance) {
+              minDistance = distance;
+              bestDestination = destination;
+              bestDestinationIndex = indexDestination;
+              bestBlockToSpawn = block;
+            }
+          }
+        }
+        this.debug(
+          `BestBlock to spawn ${bestBlockToSpawn.x},${bestBlockToSpawn.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
+        );
+        remainingSeparation.splice(bestDestinationIndex, 1);
+        actions.push(new SpawnAction(1, bestBlockToSpawn));
+      }
+    }
+
     const end = new Date().getTime() - start.getTime();
     if (debugTime) this.debug(`moveToSeparation time: ${end}ms`);
     return actions;
+  }
+
+  predictBestMovesToSeparation() {
+    const minDistanceToSeparation = minBy(
+      myRobots,
+      (block) => block.distanceToSeparation
+    ).value;
+    this.debug(
+      `predictBestMovesToSeparation for ${minDistanceToSeparation} turns`
+    );
+  }
+
+  static createCopyOfMap(map: Block[][]) {
+    const copy: Block[][] = [];
+    for (let i = 0; i < map.length; i++) {
+      const blocks: Block[] = [];
+      for (let j = 0; j < map[i].length; j++) {
+        blocks.push(Block.clone(map[i][j]));
+      }
+      copy.push(blocks);
+    }
+    return copy;
   }
 }
 

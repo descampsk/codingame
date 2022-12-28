@@ -119,6 +119,10 @@ export class RecyclerBuilder {
         const bIsSeparation = b.isOnSeparation;
         if (aIsSeparation && !bIsSeparation) return -1;
         if (bIsSeparation && !aIsSeparation) return 1;
+        if (a.initialOwner !== b.initialOwner) {
+          if (a.initialOwner === Owner.OPPONENT) return -1;
+          if (b.initialOwner === Owner.OPPONENT) return 1;
+        }
         if (grassCreatedA !== grassCreatedB)
           return grassCreatedA - grassCreatedB;
         if (gainsPerTurnA !== gainsPerTurnB)
@@ -154,7 +158,11 @@ export class RecyclerBuilder {
           robot.y === block.y &&
           myMatter >= 10
         ) {
-          if (robot.units > 1) actions.push(new BuildAction(block));
+          if (
+            robot.units > 1 ||
+            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner)
+          )
+            actions.push(new BuildAction(block));
           else this.hasBuildLastRound = true;
           break;
         }
@@ -171,7 +179,11 @@ export class RecyclerBuilder {
           robot.x === block.x &&
           myMatter >= 10
         ) {
-          if (robot.units > 1) actions.push(new BuildAction(block));
+          if (
+            robot.units > 1 ||
+            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner)
+          )
+            actions.push(new BuildAction(block));
           else this.hasBuildLastRound = true;
           break;
         }
