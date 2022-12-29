@@ -23,6 +23,7 @@ import {
   turn,
   width,
 } from "./State";
+import { ia } from "./IA";
 
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
@@ -154,7 +155,8 @@ export class RecyclerBuilder {
       turn > 2 &&
       !this.hasBuildLastRound &&
       (notGrassBlocks.length >= 80 ||
-        opponentRecyclers.length > myRecyclers.length) &&
+        opponentRecyclers.length > myRecyclers.length ||
+        ia.turnsWithSameScore > 10) &&
       (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
       // Lost 100 seats in the Leaderboard if I remove this condition
       myMatter < 40;
@@ -179,7 +181,7 @@ export class RecyclerBuilder {
           block.canBuild &&
           !this.isNearOfARecycler(block) &&
           this.computeGains(block).gains > 20 &&
-          block.island?.owner !== Owner.ME
+          (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
       )
       .sort((a, b) => {
         const {
@@ -244,7 +246,7 @@ export class RecyclerBuilder {
             [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner)
           )
             actions.push(new BuildAction(block));
-          else this.hasBuildLastRound = true;
+          else if (myMatter < 20) this.hasBuildLastRound = true;
           break;
         }
       }

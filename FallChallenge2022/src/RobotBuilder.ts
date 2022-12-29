@@ -54,15 +54,23 @@ export class RobotBuilder {
         if (
           side * (robot.x - block.x) === 1 &&
           robot.y === block.y &&
-          robot.units - block.units > 0 &&
-          myMatter >= 10 * (robot.units - block.units)
+          robot.units - block.units > 0
         ) {
-          this.debug(
-            `DefenseSpawn of ${robot.units - block.units} on ${block.x},${
-              block.y
-            }`
-          );
-          actions.push(new SpawnAction(robot.units - block.units, block));
+          if (myMatter >= 10 * (robot.units - block.units)) {
+            this.debug(
+              `DefenseSpawn of ${robot.units - block.units} on ${block.x},${
+                block.y
+              }`
+            );
+            actions.push(new SpawnAction(robot.units - block.units, block));
+          } else {
+            this.debug(
+              `Wont defend on ${block.x},${block.y} because we cant build of ${
+                robot.units - block.units
+              } units`
+            );
+            block.canSpawn = false;
+          }
         }
       }
     }

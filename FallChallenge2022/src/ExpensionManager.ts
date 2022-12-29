@@ -250,7 +250,7 @@ export class ExtensionManager {
         `BestRobot ${bestRobot.x},${bestRobot.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
       );
 
-      bestRobot.hasMoved = true;
+      if (bestRobot.units === 1) bestRobot.hasMoved = true;
       remainingSeparation.splice(bestDestinationIndex, 1);
       const sameHigh = bestDestination.y === bestRobot.y;
       if (sameHigh) {

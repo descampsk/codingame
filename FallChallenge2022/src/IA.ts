@@ -18,6 +18,14 @@ import {
 export class IA {
   actions: Action[] = [];
 
+  lastScore: { mine: number; opponent: number } = { mine: 0, opponent: 0 };
+
+  turnsWithSameScore = 0;
+
+  lastActions: Action[] = [];
+
+  turnsWithSameActions = 0;
+
   chooseAction() {
     const recyclerActions = recyclerBuilder.action();
     const moveToSeparationActions = expensionManager.moveAndBuildToSeparation();
@@ -132,8 +140,36 @@ export class IA {
     );
   }
 
+  checkSameActions() {
+    if (this.actions.length !== this.lastActions.length) {
+      this.turnsWithSameActions = 0;
+      return;
+    }
+    for (let i = 0; i < this.actions.length; i++) {
+      if (!this.actions[i].equals(this.lastActions[i])) {
+        this.turnsWithSameActions = 0;
+        return;
+      }
+    }
+    this.turnsWithSameActions += 1;
+  }
+
+  checkSameScore() {
+    const { mine, opponent } = this.lastScore;
+    if (mine === myBlocks.length && opponent === opponentBlocks.length) {
+      this.turnsWithSameScore += 1;
+    } else {
+      this.lastScore.mine = myBlocks.length;
+      this.lastScore.opponent = opponentBlocks.length;
+      this.turnsWithSameScore = 0;
+    }
+  }
+
   endTurn() {
+    this.checkSameScore();
+    debug("turnsWithSameScore", this.turnsWithSameScore);
     if (this.actions.length) {
+      this.lastActions = Array.from(this.actions);
       console.log(this.actions.map((action) => action.output()).join(";"));
     } else {
       console.log("WAIT");

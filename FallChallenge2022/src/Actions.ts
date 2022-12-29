@@ -1,3 +1,4 @@
+/* eslint-disable class-methods-use-this */
 /* eslint-disable max-classes-per-file */
 import { Block } from "./Block";
 import { map, myMatter, myRecyclers, setMyMatter } from "./State";
@@ -5,6 +6,7 @@ import { debug } from "./helpers";
 
 export interface Action {
   output: () => string;
+  equals: (action: Action) => boolean;
 }
 
 export class MoveAction implements Action {
@@ -16,6 +18,15 @@ export class MoveAction implements Action {
     this.origin.units -= this.amount;
     if (this.origin.owner === this.destination.owner)
       this.destination.units += this.amount;
+  }
+
+  equals(action: Action) {
+    const { amount, origin, destination } = action as MoveAction;
+    return (
+      this.amount === amount &&
+      this.origin.equals(origin) &&
+      this.destination.equals(destination)
+    );
   }
 
   output() {
@@ -36,6 +47,11 @@ export class BuildAction implements Action {
     const { x, y } = this.block;
     return `BUILD ${x} ${y}`;
   }
+
+  equals(action: Action) {
+    const { block } = action as BuildAction;
+    return this.block.equals(block);
+  }
 }
 
 export class SpawnAction implements Action {
@@ -44,6 +60,11 @@ export class SpawnAction implements Action {
     setMyMatter(myMatter - 10 * amount);
 
     this.amount = amount;
+  }
+
+  equals(action: Action) {
+    const { block, amount } = action as SpawnAction;
+    return this.block.equals(block) && this.amount === amount;
   }
 
   output() {
@@ -59,6 +80,10 @@ export type WaitAction = {
 export class MessageAction implements Action {
   // eslint-disable-next-line no-useless-constructor
   constructor(public message: string) {}
+
+  equals() {
+    return true;
+  }
 
   output() {
     return `MESSAGE ${this.message}`;

@@ -34,7 +34,7 @@ export class Block {
   ) {}
 
   equals(block: Block) {
-    return this.x === block.x && this.y === block.y;
+    return block && this.x === block.x && this.y === block.y;
   }
 
   static clone(block: Block) {
