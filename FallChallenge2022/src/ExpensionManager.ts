@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Action, MoveAction, SpawnAction } from "./Actions";
 import { Block } from "./Block";
-import { computeManhattanDistance, debug, minBy } from "./helpers";
+import { computeManhattanDistance, debug, maxBy, minBy } from "./helpers";
 import {
   debugTime,
   map,
@@ -11,6 +11,7 @@ import {
   myStartPosition,
   opponentStartPosition,
   Owner,
+  turn,
 } from "./State";
 
 export class ExtensionManager {
@@ -18,7 +19,7 @@ export class ExtensionManager {
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -205,6 +206,9 @@ export class ExtensionManager {
     const start = new Date();
     const actions: Action[] = [];
     const robots = myRobots.filter((robot) => !robot.hasMoved);
+    const maxDistanceFromStartToSeparation = maxBy(this.separation, (block) =>
+      myStartPosition.distanceToBlock(block)
+    ).maxValue!;
 
     while (robots.length && remainingSeparation.length) {
       let bestDestination = remainingSeparation[0];
@@ -232,40 +236,54 @@ export class ExtensionManager {
         }
       }
 
+      robots.splice(bestRobotIndex, 1);
+      // Sometimes it s better to let this robot move because it try to go in a too far away block
+      // We just remove it and let the expension robot builder create a new way in a better place
+      if (minDistance - 2 > maxDistanceFromStartToSeparation - turn) {
+        this.debug(
+          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${maxDistanceFromStartToSeparation} - ${turn} + 2 so we prefer to find an other robot.`
+        );
+        continue;
+      }
+
       this.debug(
         `BestRobot ${bestRobot.x},${bestRobot.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
       );
 
-      robots.splice(bestRobotIndex, 1);
       bestRobot.hasMoved = true;
       remainingSeparation.splice(bestDestinationIndex, 1);
-      const yDirection =
-        (bestDestination.y - bestRobot.y) /
-        Math.abs(bestDestination.y - bestRobot.y);
-      const shouldGoVertically =
-        bestDestination.y !== bestRobot.y &&
-        map[bestRobot.y + yDirection][bestRobot.x].canMove &&
-        map[bestRobot.y + yDirection][bestRobot.x].distanceToBlock(
-          bestDestination
-        ) ===
-          bestRobot.distanceToBlock(bestDestination) - 1;
-      this.debug(
-        "Should go vertically",
-        shouldGoVertically,
-        [bestRobot.x, bestRobot.y],
-        yDirection,
-        [bestDestination.x, bestDestination.y]
-      );
-      if (shouldGoVertically) {
-        actions.push(
-          new MoveAction(
-            1,
-            bestRobot,
-            map[bestRobot.y + yDirection][bestRobot.x]
-          )
-        );
-      } else {
+      const sameHigh = bestDestination.y === bestRobot.y;
+      if (sameHigh) {
         actions.push(new MoveAction(1, bestRobot, bestDestination));
+      } else {
+        const yDirection =
+          (bestDestination.y - bestRobot.y) /
+          Math.abs(bestDestination.y - bestRobot.y);
+        const shouldGoVertically =
+          bestDestination.y !== bestRobot.y &&
+          map[bestRobot.y + yDirection][bestRobot.x].canMove &&
+          map[bestRobot.y + yDirection][bestRobot.x].distanceToBlock(
+            bestDestination
+          ) ===
+            bestRobot.distanceToBlock(bestDestination) - 1;
+        this.debug(
+          "Should go vertically",
+          shouldGoVertically,
+          [bestRobot.x, bestRobot.y],
+          yDirection,
+          [bestDestination.x, bestDestination.y]
+        );
+        if (shouldGoVertically) {
+          actions.push(
+            new MoveAction(
+              1,
+              bestRobot,
+              map[bestRobot.y + yDirection][bestRobot.x]
+            )
+          );
+        } else {
+          actions.push(new MoveAction(1, bestRobot, bestDestination));
+        }
       }
     }
 

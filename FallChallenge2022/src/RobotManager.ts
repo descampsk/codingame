@@ -12,12 +12,13 @@ import {
   myStartPosition,
   opponentRobots,
   myMatter,
+  opponentStartPosition,
 } from "./State";
 
 export class RobotManager {
   public robotsToMove: Block[] = [];
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -75,12 +76,27 @@ export class RobotManager {
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
 
+          const distanceToMyStartA = myStartPosition.distanceToBlock(a);
+          const distanceToMyStartB = myStartPosition.distanceToBlock(b);
+          const distanceToOpponentStartA =
+            opponentStartPosition.distanceToBlock(a);
+          const distanceToOpponentStartB =
+            opponentStartPosition.distanceToBlock(b);
+          const isNearerOfMyStartA =
+            distanceToMyStartA <= distanceToOpponentStartA;
+          const isNearerOfMyStartB =
+            distanceToMyStartB <= distanceToOpponentStartB;
+
           // Ordre de priorité
-          // - si case ennemie, on tue les robots en premier
+          // - si case ennemie, on tue les robots en premier si mon robot est plus proche de mon point de départ que celui de l'ennemie
           // - ennemie avant vide
           // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
-          if (a.owner === Owner.OPPONENT || b.owner === Owner.OPPONENT)
+          if (
+            isNearerOfMyStartA &&
+            isNearerOfMyStartB &&
+            (a.owner === Owner.OPPONENT || b.owner === Owner.OPPONENT)
+          )
             return (
               (b.owner === Owner.OPPONENT ? b.units : 0) -
               (a.owner === Owner.OPPONENT ? a.units : 0)

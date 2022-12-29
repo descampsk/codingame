@@ -25,6 +25,24 @@ export function minBy<T>(
   return { min: minObj, index: minIndex, value: min };
 }
 
+export function maxBy<T>(
+  array: Array<T>,
+  callback: (value: T) => number
+): { maxObj: T | null; maxIndex: number | null; maxValue: number | null } {
+  let maxValue = -1 * Infinity;
+  let maxObj = null;
+  let maxIndex = null;
+  for (const [index, a] of array.entries()) {
+    const val = callback(a);
+    if (val > maxValue) {
+      maxValue = val;
+      maxObj = a;
+      maxIndex = index;
+    }
+  }
+  return { maxObj, maxValue, maxIndex };
+}
+
 export const computeManhattanDistance = (blockA: Block, blockB: Block) =>
   Math.abs(blockA.x - blockB.x) + Math.abs(blockA.y - blockB.y);
 

@@ -27,7 +27,7 @@ import {
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -148,7 +148,8 @@ export class RecyclerBuilder {
     const should =
       turn > 2 &&
       !this.hasBuildLastRound &&
-      notGrassBlocks.length >= 80 &&
+      (notGrassBlocks.length >= 80 ||
+        opponentRecyclers.length > myRecyclers.length) &&
       (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
       // Lost 100 seats in the Leaderboard if I remove this condition
       myMatter < 40;
@@ -205,6 +206,7 @@ export class RecyclerBuilder {
     if (possibleRecyclers.length) {
       for (const recycler of possibleRecyclers) {
         if (!this.willCreateNewIsland(recycler)) {
+          this.hasBuildLastRound = true;
           actions.push(new BuildAction(recycler));
           break;
         }
@@ -279,7 +281,6 @@ export class RecyclerBuilder {
     }
 
     if (this.shouldBuildNaiveRecycler()) {
-      this.hasBuildLastRound = true;
       const actions = this.buildNaiveRecycler();
       const end = new Date().getTime() - start.getTime();
       if (debugTime) this.debug(`action time: ${end} ms`);

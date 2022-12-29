@@ -16,7 +16,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -72,11 +72,12 @@ export class RobotBuilder {
       actions.map((action) => [action.block.x, action.block.y])
     );
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug("computeDefensiveSpawn time: %dms", end);
+    if (debugTime) this.debug(`computeDefensiveSpawn time: ${end} ms`);
     return actions;
   }
 
   computeNormalSpawn() {
+    const start = new Date();
     // On spawn que si le block adjacent a au moins un voisin vide ou ennemi
     const blocksToSpawn = myBlocks.filter(
       (block) =>
@@ -133,6 +134,8 @@ export class RobotBuilder {
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);
     });
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`computeNormalSpawn time: ${end} ms`);
     return blocksToSpawn;
   }
 
