@@ -6,7 +6,7 @@ import { Island } from "./Island";
 
 export const DEBUG = true;
 
-export const debugTime = true;
+export const debugTime = false;
 
 export let turn = 0;
 

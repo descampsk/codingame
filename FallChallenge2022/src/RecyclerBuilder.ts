@@ -27,7 +27,7 @@ import {
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
 
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -84,18 +84,62 @@ export class RecyclerBuilder {
     }
     copyMap.flat().forEach((block) => block.updateNeighbors(copyMap));
     const newIslands = Island.findIslands(copyMap);
-    if (newIslands.length === islands.length) return false;
+    if (newIslands.length === islands.length) {
+      this.debug(
+        `Recycler on ${block.x},${block.y} will not create a new island`,
+        {
+          newIslands: newIslands.map((i) => [i.blocks[0].x, i.blocks[0].y]),
+          islands: islands.map((i) => [i.blocks[0].x, i.blocks[0].y]),
+        }
+      );
+      return false;
+    }
 
     for (const island of newIslands) {
       if (
         island.owner === Owner.NONE &&
-        island.blocks.find((islandBlock) =>
-          block.neighbors.find((neighbor) => neighbor.equals(islandBlock))
+        !islands.find(
+          (i) => i.blocks[0].equals(island.blocks[0]) && i.size === island.size
         )
       ) {
+        this.debug(
+          `Recycler on ${block.x},${block.y} will create a new island without block we own`,
+          {
+            island: {
+              owner: island.owner,
+              origin: `${island.blocks[0].x},${island.blocks[0].y}`,
+              size: island.size,
+            },
+            newIslands: newIslands.map((i) => ({
+              owner: i.owner,
+              origin: `${i.blocks[0].x},${i.blocks[0].y}`,
+              size: i.size,
+            })),
+            islands: islands.map((i) => ({
+              owner: i.owner,
+              origin: `${i.blocks[0].x},${i.blocks[0].y}`,
+              size: i.size,
+            })),
+          }
+        );
         return true;
       }
     }
+    this.debug(
+      `Recycler on ${block.x},${block.y} will create a new island but we can spawn on it`,
+      {
+        newIslands: newIslands.map((i) => ({
+          owner: i.owner,
+          origin: `${i.blocks[0].x},${i.blocks[0].y}`,
+          size: i.size,
+        })),
+        islands: islands.map((i) => ({
+          owner: i.owner,
+          origin: `${i.blocks[0].x},${i.blocks[0].y}`,
+          size: i.size,
+        })),
+      }
+    );
     return false;
   }
 
