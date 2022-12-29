@@ -44,7 +44,12 @@ export class RecyclerBuilder {
   }
 
   computeGains(block: Block) {
-    const nearCoordinates = [[-1, 0], [1, 0], [0, 1], [0 - 1]];
+    const nearCoordinates = [
+      [-1, 0],
+      [1, 0],
+      [0, 1],
+      [0, -1],
+    ];
     const { scrapAmount } = block;
     let total = scrapAmount;
     let grassCreated = 1;
