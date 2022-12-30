@@ -1,4 +1,5 @@
 /* eslint-disable class-methods-use-this */
+import { Heapq } from "ts-heapq";
 import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { expensionManager } from "./ExpensionManager";
@@ -33,58 +34,6 @@ export class RecyclerBuilder {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
     if (this.SHOULD_DEBUG) debug("[RecyclerBuilder]", ...data);
-  }
-
-  isNearOfARecycler(block: Block) {
-    for (const recycler of myRecyclers) {
-      if (computeManhattanDistance(recycler, block) < 3) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  computeGains(block: Block) {
-    const nearCoordinates = [
-      [-1, 0],
-      [1, 0],
-      [0, 1],
-      [0, -1],
-    ];
-    const { scrapAmount } = block;
-    let total = scrapAmount;
-    let grassCreated = 1;
-    for (const nearCoordinate of nearCoordinates) {
-      const [x, y] = nearCoordinate;
-      const nearBlockX = block.x + x;
-      const nearBlockY = block.y + y;
-      if (
-        nearBlockX >= 0 &&
-        nearBlockX < width &&
-        nearBlockY >= 0 &&
-        nearBlockY < height
-      ) {
-        const nearBlock = map[block.y + y][block.x + x];
-        if (!this.isNearOfARecycler(nearBlock)) {
-          total +=
-            nearBlock.scrapAmount > scrapAmount
-              ? scrapAmount
-              : nearBlock.scrapAmount;
-        }
-
-        if (
-          nearBlock.scrapAmount <= scrapAmount &&
-          !this.isNearOfARecycler(nearBlock)
-        )
-          grassCreated += 1;
-      }
-    }
-    // debug("computeTotalGain", total, block.position);
-    return {
-      gains: total,
-      gainsPerTurn: total / scrapAmount,
-      grassCreated,
-    };
   }
 
   willCreateNewIsland(block: Block) {
@@ -186,47 +135,46 @@ export class RecyclerBuilder {
 
   buildNaiveRecycler() {
     const actions: BuildAction[] = [];
-    const possibleRecyclers = myBlocks
-      .filter(
-        (block) =>
-          block.canBuild &&
-          this.computeGains(block).gains > 20 &&
-          (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
-      )
-      .sort((a, b) => {
-        const {
-          gains: gainA,
-          gainsPerTurn: gainsPerTurnA,
-          grassCreated: grassCreatedA,
-        } = this.computeGains(a);
-        const {
-          gains: gainB,
-          gainsPerTurn: gainsPerTurnB,
-          grassCreated: grassCreatedB,
-        } = this.computeGains(b);
-        const aIsSeparation = a.isOnSeparation;
-        const bIsSeparation = b.isOnSeparation;
-        if (aIsSeparation && !bIsSeparation) return -1;
-        if (bIsSeparation && !aIsSeparation) return 1;
-        if (a.initialOwner !== b.initialOwner) {
-          if (a.initialOwner === Owner.OPPONENT) return -1;
-          if (b.initialOwner === Owner.OPPONENT) return 1;
-        }
-        if (grassCreatedA !== grassCreatedB)
-          return grassCreatedA - grassCreatedB;
-        if (gainsPerTurnA !== gainsPerTurnB)
-          return gainsPerTurnB - gainsPerTurnA;
+    const possibleRecyclers = myBlocks.filter(
+      (block) =>
+        block.canBuild &&
+        block.computeGains().gains > 20 &&
+        (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
+    );
+    const bestRecyclers: Heapq<Block> = new Heapq<Block>([], (a, b) => {
+      const {
+        gains: gainA,
+        gainsPerTurn: gainsPerTurnA,
+        grassCreated: grassCreatedA,
+      } = a.computeGains();
+      const {
+        gains: gainB,
+        gainsPerTurn: gainsPerTurnB,
+        grassCreated: grassCreatedB,
+      } = b.computeGains();
+      const aIsSeparation = a.isOnSeparation;
+      const bIsSeparation = b.isOnSeparation;
+      if (aIsSeparation && !bIsSeparation) return true;
+      if (bIsSeparation && !aIsSeparation) return false;
+      if (a.initialOwner !== b.initialOwner) {
+        if (a.initialOwner === Owner.OPPONENT) return true;
+        if (b.initialOwner === Owner.OPPONENT) return false;
+      }
+      if (grassCreatedA !== grassCreatedB) return grassCreatedA < grassCreatedB;
+      if (gainsPerTurnA !== gainsPerTurnB) return gainsPerTurnB < gainsPerTurnA;
 
-        return gainB - gainA;
-      });
+      return gainB < gainA;
+    });
+    for (const recycler of possibleRecyclers) {
+      bestRecyclers.push(recycler);
+    }
 
-    if (possibleRecyclers.length) {
-      for (const recycler of possibleRecyclers) {
-        if (!this.willCreateNewIsland(recycler)) {
-          this.hasBuildLastRound = true;
-          actions.push(new BuildAction(recycler));
-          break;
-        }
+    while (bestRecyclers.length()) {
+      const recycler = bestRecyclers.pop();
+      if (!this.willCreateNewIsland(recycler)) {
+        this.hasBuildLastRound = true;
+        actions.push(new BuildAction(recycler));
+        break;
       }
     }
     debug("buildNaiveRecycler: ", actions.length);

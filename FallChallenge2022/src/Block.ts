@@ -2,9 +2,9 @@
 /* eslint-disable no-useless-constructor */
 import { expensionManager } from "./ExpensionManager";
 import { dijtstraAlgorithm } from "./djikstra";
-import { minBy } from "./helpers";
+import { computeManhattanDistance, minBy } from "./helpers";
 import { Island } from "./Island";
-import { height, map, notMyBlocks, Owner, width } from "./State";
+import { height, map, myRecyclers, notMyBlocks, Owner, width } from "./State";
 
 export class Block {
   public djikstraMap: number[][] = [];
@@ -20,6 +20,12 @@ export class Block {
   public hasMoved = false;
 
   private potentiel: number | null = null;
+
+  private gains: {
+    gains: number;
+    gainsPerTurn: number;
+    grassCreated: number;
+  } | null = null;
 
   constructor(
     public x: number,
@@ -157,6 +163,7 @@ export class Block {
     this.island = null;
     this.djikstraMap = [];
     this.potentiel = null;
+    this.gains = null;
     this.hasMoved = false;
   }
 
@@ -203,6 +210,56 @@ export class Block {
       }
     }
     return this.potentiel;
+  }
+
+  isNearOfARecycler() {
+    for (const recycler of myRecyclers) {
+      if (computeManhattanDistance(recycler, this) < 3) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  computeGains() {
+    if (this.gains) return this.gains;
+    const nearCoordinates = [
+      [-1, 0],
+      [1, 0],
+      [0, 1],
+      [0, -1],
+    ];
+    const { scrapAmount } = this;
+    let total = scrapAmount;
+    let grassCreated = 1;
+    for (const nearCoordinate of nearCoordinates) {
+      const [x, y] = nearCoordinate;
+      const nearBlockX = this.x + x;
+      const nearBlockY = this.y + y;
+      if (
+        nearBlockX >= 0 &&
+        nearBlockX < width &&
+        nearBlockY >= 0 &&
+        nearBlockY < height
+      ) {
+        const nearBlock = map[this.y + y][this.x + x];
+        if (!this.isNearOfARecycler()) {
+          total +=
+            nearBlock.scrapAmount > scrapAmount
+              ? scrapAmount
+              : nearBlock.scrapAmount;
+        }
+
+        if (nearBlock.scrapAmount <= scrapAmount && !this.isNearOfARecycler())
+          grassCreated += 1;
+      }
+    }
+    this.gains = {
+      gains: total,
+      gainsPerTurn: total / scrapAmount,
+      grassCreated,
+    };
+    return this.gains;
   }
 
   /**

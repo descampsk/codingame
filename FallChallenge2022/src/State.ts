@@ -6,7 +6,7 @@ import { Island } from "./Island";
 
 export const DEBUG = true;
 
-export const debugTime = false;
+export const debugTime = true;
 
 export let turn = 0;
 
@@ -207,31 +207,14 @@ export const computeStartPosition = (forceReset = false) => {
 
 export const refresh = () => {
   turn += 1;
-  readInputs();
-
   computeData();
-
   computeStartPosition();
-
+  islands = Island.findIslands(map);
   //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
-
   //   debug("Block:", map[6][2].getPotentiel(5));
   //   debug("Block:", map[6][1].getPotentiel(5));
   //   debug("Block:", map[5][2].getPotentiel(5));
   //   debug("Block:", map[5][1].getPotentiel(5));
-
-  islands = Island.findIslands(map);
-  debug(
-    "[Islands]",
-    islands.length,
-    islands.map((island) => ({
-      size: island.size,
-      owner: island.owner,
-      origin: [island.blocks[0].x, island.blocks[0].y],
-    }))
-  );
-
-  expensionManager.computeSeparation();
   //   debug("Island:", islands.length);
   //   debug("Block:", map[4][4].neighbors);
   //   debug("Island:", map[1][6].neighbors);

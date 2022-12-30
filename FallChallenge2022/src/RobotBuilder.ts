@@ -99,34 +99,42 @@ export class RobotBuilder {
       blocksToSpawn.length,
       blocksToSpawn.map((block) => [block.x, block.y])
     );
-    blocksToSpawn.sort((a, b) => {
-      let minAToNone = Infinity;
-      let minBToNone = Infinity;
-      let minAToOpponent = Infinity;
-      let minBToOpponent = Infinity;
+    const sortingCriteria: Map<
+      Block,
+      {
+        minToOpponent: number;
+        minToNone: number;
+        potential: number;
+      }
+    > = new Map();
+    for (const block of blocksToSpawn) {
+      let minToNone = Infinity;
+      let minToOpponent = Infinity;
       for (const emptyBlock of notMyBlocks) {
-        const distanceA = a.distanceToBlock(emptyBlock);
-        const distanceB = b.distanceToBlock(emptyBlock);
+        const distance = block.distanceToBlock(emptyBlock);
         if (emptyBlock.owner === Owner.OPPONENT) {
-          if (distanceA < minAToOpponent) {
-            minAToOpponent = distanceA;
+          if (distance < minToOpponent) {
+            minToOpponent = distance;
           }
-          if (distanceB < minBToOpponent) {
-            minBToOpponent = distanceB;
-          }
-        } else {
-          if (distanceA < minAToNone) {
-            minAToNone = distanceA;
-          }
-          if (distanceB < minBToNone) {
-            minBToNone = distanceB;
-          }
+        } else if (distance < minToNone) {
+          minToNone = distance;
         }
       }
-
-      const potentielRadius = 5;
-      const potentielA = a.getPotentiel(potentielRadius);
-      const potentielB = b.getPotentiel(potentielRadius);
+      const potentialRadius = 5;
+      const potential = block.getPotentiel(potentialRadius);
+      sortingCriteria.set(block, { minToNone, minToOpponent, potential });
+    }
+    blocksToSpawn.sort((a, b) => {
+      const {
+        minToNone: minToNoneA,
+        minToOpponent: minToOpponentA,
+        potential: potentialA,
+      } = sortingCriteria.get(a)!;
+      const {
+        minToNone: minToNoneB,
+        minToOpponent: minToOpponentB,
+        potential: potentialB,
+      } = sortingCriteria.get(b)!;
 
       // Ordre de priorité
       // - distance à une case ennemie
@@ -134,11 +142,11 @@ export class RobotBuilder {
       // - on prend le meilleur potentiel
       // - on prend celle qui a le moins d'unité sur la case
       // - on prend celui qui est le plus de l'autre côté
-      if (minAToOpponent !== minBToOpponent)
-        return minAToOpponent - minBToOpponent;
-      if (minAToOpponent === Infinity && minAToNone !== minBToNone)
-        return minAToNone - minBToNone;
-      if (potentielA !== potentielB) return potentielB - potentielA;
+      if (minToOpponentA !== minToOpponentB)
+        return minToOpponentA - minToOpponentB;
+      if (minToOpponentA === Infinity && minToNoneA !== minToNoneB)
+        return minToNoneA - minToNoneB;
+      if (potentialA !== potentialB) return potentialB - potentialA;
       if (a.units !== b.units) return a.units - b.units;
       return side * (b.x - a.x);
     });
