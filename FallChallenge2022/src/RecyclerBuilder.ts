@@ -65,11 +65,18 @@ export class RecyclerBuilder {
         nearBlockY < height
       ) {
         const nearBlock = map[block.y + y][block.x + x];
-        total +=
-          nearBlock.scrapAmount > scrapAmount
-            ? scrapAmount
-            : nearBlock.scrapAmount;
-        if (nearBlock.scrapAmount <= scrapAmount) grassCreated += 1;
+        if (!this.isNearOfARecycler(nearBlock)) {
+          total +=
+            nearBlock.scrapAmount > scrapAmount
+              ? scrapAmount
+              : nearBlock.scrapAmount;
+        }
+
+        if (
+          nearBlock.scrapAmount <= scrapAmount &&
+          !this.isNearOfARecycler(nearBlock)
+        )
+          grassCreated += 1;
       }
     }
     // debug("computeTotalGain", total, block.position);
@@ -83,12 +90,16 @@ export class RecyclerBuilder {
   willCreateNewIsland(block: Block) {
     const copyMap = Block.createCopyOfMap(map);
     copyMap[block.y][block.x].recycler = true;
-    for (const neighbor of block.neighbors) {
-      if (neighbor.scrapAmount <= block.scrapAmount) {
-        copyMap[neighbor.y][neighbor.x].scrapAmount = 0;
+    const flapMap = copyMap.flat();
+    const recyclers = flapMap.filter((block) => block.recycler);
+    for (const recycler of recyclers) {
+      for (const neighbor of recycler.neighbors) {
+        if (neighbor.scrapAmount <= recycler.scrapAmount) {
+          copyMap[neighbor.y][neighbor.x].scrapAmount = 0;
+        }
       }
     }
-    copyMap.flat().forEach((block) => block.updateNeighbors(copyMap));
+    flapMap.forEach((block) => block.updateNeighbors(copyMap));
     const newIslands = Island.findIslands(copyMap);
     if (newIslands.length === islands.length) {
       this.debug(
@@ -179,7 +190,6 @@ export class RecyclerBuilder {
       .filter(
         (block) =>
           block.canBuild &&
-          !this.isNearOfARecycler(block) &&
           this.computeGains(block).gains > 20 &&
           (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
       )
@@ -243,7 +253,8 @@ export class RecyclerBuilder {
         ) {
           if (
             robot.units > 1 ||
-            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner)
+            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner) ||
+            opponentRecyclers.length > myRecyclers.length
           )
             actions.push(new BuildAction(block));
           else if (myMatter < 20) this.hasBuildLastRound = true;
