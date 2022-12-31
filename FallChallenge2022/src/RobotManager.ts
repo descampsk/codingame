@@ -3,12 +3,11 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
-import { computeManhattanDistance, debug } from "./helpers";
+import { computeManhattanDistance, debug, debugTime } from "./helpers";
 import {
   myRobots,
   Owner,
   side,
-  debugTime,
   myStartPosition,
   opponentRobots,
   myMatter,
@@ -70,6 +69,11 @@ export class RobotManager {
 
     for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
       const nearestEmptyBlocks = robot.neighbors
+        .filter((block) => {
+          const { willBecomeGrass } = block;
+          if (willBecomeGrass === Infinity) return true;
+          return willBecomeGrass > robot.distanceToBlock(block);
+        })
         .sort((a, b) => {
           const potentielRadius =
             robot.island?.owner === Owner.ME ? Infinity : 5;
@@ -104,21 +108,19 @@ export class RobotManager {
 
           if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
-        })
-        .filter((block) => {
-          const { willBecomeGrass } = block;
-          if (willBecomeGrass === Infinity) return true;
-          return willBecomeGrass > robot.distanceToBlock(block);
         });
 
       const nearestEmptyBlock = nearestEmptyBlocks[0];
 
       if (nearestEmptyBlock) {
+        this.debug(
+          `Robot ${robot.x},${robot.y} will go to ${nearestEmptyBlock.x},${nearestEmptyBlock.y}`
+        );
         actions.push(new MoveAction(1, robot, nearestEmptyBlock));
       }
     }
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug("naiveMethod time: %dms", end);
+    if (debugTime) this.debug(`naiveMethod time: ${end} ms`);
     return actions;
   }
 

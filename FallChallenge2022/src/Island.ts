@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-useless-constructor */
 import { Block } from "./Block";
-import { debug } from "./helpers";
-import { debugTime, Owner } from "./State";
+import { debug, debugTime } from "./helpers";
+import { Owner } from "./State";
 
 export class Island {
   private SHOULD_DEBUG = true;

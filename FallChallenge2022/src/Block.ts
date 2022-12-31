@@ -212,6 +212,10 @@ export class Block {
     return this.potentiel;
   }
 
+  resetPotentiel() {
+    this.potentiel = null;
+  }
+
   isNearOfARecycler() {
     for (const recycler of myRecyclers) {
       if (computeManhattanDistance(recycler, this) < 3) {

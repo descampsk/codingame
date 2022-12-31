@@ -1,7 +1,6 @@
 import { Heapq } from "ts-heapq";
 import type { Block } from "./Block";
-import { debug } from "./helpers";
-import { debugTime } from "./State";
+import { debug, debugTime } from "./helpers";
 
 export const dijtstraAlgorithm = (
   map: Block[][],
@@ -25,34 +24,28 @@ export const dijtstraAlgorithm = (
   let currentBlock: number[] | null = nextBlocks.pop();
   while (currentBlock) {
     const [x, y] = currentBlock;
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        const xToUpdate = x + i;
-        const yToUpdate = y + j;
-        if (
-          (i !== 0 || j !== 0) &&
-          Math.abs(i) !== Math.abs(j) &&
-          xToUpdate >= 0 &&
-          xToUpdate < map.length &&
-          yToUpdate >= 0 &&
-          yToUpdate < map[0].length &&
-          !hasVisited.has(`${xToUpdate},${yToUpdate}`) &&
-          map[xToUpdate][yToUpdate].canMove // &&
-          // Performance optimisation as we never try to move 10 blocks away
-          // distances[x][y] < 12
-        ) {
-          const newValue = 1 + distances[x][y];
-          if (newValue < distances[xToUpdate][yToUpdate]) {
-            distances[xToUpdate][yToUpdate] = newValue;
-            nextBlocks.push([xToUpdate, yToUpdate, newValue]);
-            hasVisited.add(`${xToUpdate},${yToUpdate}`);
-          }
+    const block = map[x][y];
+    for (const neighor of block.neighbors) {
+      const xToUpdate = neighor.y;
+      const yToUpdate = neighor.x;
+      if (
+        !hasVisited.has(`${xToUpdate},${yToUpdate}`) &&
+        map[xToUpdate][yToUpdate].canMove // &&
+        // Performance optimisation as we never try to move 10 blocks away
+        // distances[x][y] < 20
+      ) {
+        const newValue = 1 + distances[x][y];
+        if (newValue < distances[xToUpdate][yToUpdate]) {
+          distances[xToUpdate][yToUpdate] = newValue;
+          nextBlocks.push([xToUpdate, yToUpdate, newValue]);
+          hasVisited.add(`${xToUpdate},${yToUpdate}`);
         }
       }
     }
     currentBlock = nextBlocks.length() ? nextBlocks.pop() : null;
   }
   const end = new Date().getTime() - start.getTime();
-  if (debugTime) debug("dijtstraAlgorithm time: %dms", end);
+  if (debugTime)
+    debug(`dijtstraAlgorithm for ${startingBlocks} - time: ${end}ms`);
   return distances;
 };

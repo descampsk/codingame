@@ -2,9 +2,8 @@
 /* eslint-disable class-methods-use-this */
 import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
-import { computeManhattanDistance, debug, minBy } from "./helpers";
+import { computeManhattanDistance, debug, debugTime, minBy } from "./helpers";
 import {
-  debugTime,
   map,
   myBlocks,
   myMatter,
@@ -16,7 +15,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {

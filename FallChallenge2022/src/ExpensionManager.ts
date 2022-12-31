@@ -1,9 +1,15 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Action, MoveAction, SpawnAction } from "./Actions";
 import { Block } from "./Block";
-import { computeManhattanDistance, debug, maxBy, minBy } from "./helpers";
+import { dijtstraAlgorithm } from "./djikstra";
 import {
+  computeManhattanDistance,
+  debug,
   debugTime,
+  maxBy,
+  minBy,
+} from "./helpers";
+import {
   map,
   myBlocks,
   myMatter,
@@ -16,6 +22,8 @@ import {
 
 export class ExtensionManager {
   public separation: Block[] = [];
+
+  public djikstraMap: Map<Block, number[][]> = new Map();
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
 
@@ -140,16 +148,29 @@ export class ExtensionManager {
     if (debugTime) this.debug("computeSeparation time: %dms", end);
   }
 
+  computeDjikstraMap() {
+    if (this.djikstraMap.size) return;
+    for (const block of this.separation) {
+      const djikstra = dijtstraAlgorithm(map, [[block.y, block.x]]);
+      this.djikstraMap.set(block, djikstra);
+    }
+  }
+
+  getDistanceFromBlockToSeparation(block: Block, separation: Block) {
+    return this.djikstraMap.get(separation)![block.y][block.x];
+  }
+
   moveAndBuildToSeparation() {
     const start = new Date();
     const actions: Action[] = [];
-    const remainingSeparation = this.separation
-      .filter((block) => block.owner === Owner.NONE && block.canMove)
-      .sort(
-        (a, b) =>
-          computeManhattanDistance(a, myStartPosition) -
-          computeManhattanDistance(b, myStartPosition)
-      );
+    const remainingSeparation = this.separation.filter(
+      (block) => block.owner === Owner.NONE && block.canMove
+    );
+    // .sort(
+    //   (a, b) =>
+    //     computeManhattanDistance(a, myStartPosition) -
+    //     computeManhattanDistance(b, myStartPosition)
+    // );
     actions.push(
       ...this.moveToSeparation(remainingSeparation),
       ...this.buildToSeparation(remainingSeparation)
@@ -181,7 +202,10 @@ export class ExtensionManager {
           destination,
         ] of remainingSeparation.entries()) {
           for (const block of blocksToSpawn) {
-            const distance = block.distanceToBlock(destination);
+            const distance = this.getDistanceFromBlockToSeparation(
+              block,
+              destination
+            );
             if (distance < minDistance) {
               minDistance = distance;
               bestDestination = destination;
@@ -210,22 +234,34 @@ export class ExtensionManager {
       myStartPosition.distanceToBlock(block)
     ).maxValue!;
 
+    const manhattanDistanceToOpponentStart: Map<Block, number> = new Map();
+    for (const robot of robots) {
+      manhattanDistanceToOpponentStart.set(
+        robot,
+        computeManhattanDistance(robot, opponentStartPosition)
+      );
+    }
+
     while (robots.length && remainingSeparation.length) {
       let bestDestination = remainingSeparation[0];
       let bestDestinationIndex = 0;
       let minDistance = Infinity;
       let bestRobot = robots[0];
       let bestRobotIndex = 0;
-      for (const [indexDestination, destination] of remainingSeparation
-        .slice(0, robots.length * 2)
-        .entries()) {
+      for (const [
+        indexDestination,
+        destination,
+      ] of remainingSeparation.entries()) {
         for (const [indexRobot, robot] of robots.entries()) {
-          const distance = robot.distanceToBlock(destination);
+          const distance = this.getDistanceFromBlockToSeparation(
+            robot,
+            destination
+          );
           if (
             distance < minDistance ||
             (distance === minDistance &&
-              computeManhattanDistance(bestRobot, opponentStartPosition) <
-                computeManhattanDistance(robot, opponentStartPosition))
+              manhattanDistanceToOpponentStart.get(bestRobot)! <
+                manhattanDistanceToOpponentStart.get(robot)!)
           ) {
             minDistance = distance;
             bestDestination = destination;
@@ -262,10 +298,11 @@ export class ExtensionManager {
         const shouldGoVertically =
           bestDestination.y !== bestRobot.y &&
           map[bestRobot.y + yDirection][bestRobot.x].canMove &&
-          map[bestRobot.y + yDirection][bestRobot.x].distanceToBlock(
-            bestDestination
-          ) ===
-            bestRobot.distanceToBlock(bestDestination) - 1;
+          this.djikstraMap.get(bestDestination)![bestRobot.y + yDirection][
+            bestRobot.x
+          ] ===
+            this.getDistanceFromBlockToSeparation(bestRobot, bestDestination) -
+              1;
         this.debug(
           "Should go vertically",
           shouldGoVertically,

@@ -1,7 +1,7 @@
 import { expensionManager } from "./ExpensionManager";
-import { debug } from "./helpers";
+import { debug, debugTime } from "./helpers";
 import { ia } from "./IA";
-import { debugTime, readInputs, readMapInput, refresh } from "./State";
+import { readInputs, readMapInput, refresh } from "./State";
 
 readMapInput();
 
@@ -12,6 +12,7 @@ while (true) {
   const start = new Date();
   refresh();
   expensionManager.computeSeparation();
+  expensionManager.computeDjikstraMap();
   ia.chooseAction();
   ia.endTurn();
   const end = new Date().getTime() - start.getTime();

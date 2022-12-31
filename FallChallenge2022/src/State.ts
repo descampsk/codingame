@@ -1,12 +1,8 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Block } from "./Block";
 import { expensionManager } from "./ExpensionManager";
-import { debug } from "./helpers";
+import { debug, debugTime } from "./helpers";
 import { Island } from "./Island";
-
-export const DEBUG = true;
-
-export const debugTime = true;
 
 export let turn = 0;
 
@@ -37,28 +33,8 @@ export let side: Side = Side.UNKNOWN;
 export const map: Block[][] = [];
 
 export let startPositionFound = false;
-export let myStartPosition: Block = new Block(
-  0,
-  0,
-  0,
-  Owner.NONE,
-  0,
-  false,
-  false,
-  false,
-  false
-);
-export let opponentStartPosition: Block = new Block(
-  0,
-  0,
-  0,
-  Owner.NONE,
-  0,
-  false,
-  false,
-  false,
-  false
-);
+export let myStartPosition: Block = {} as Block;
+export let opponentStartPosition: Block = {} as Block;
 
 export const separation: Block[] = [];
 

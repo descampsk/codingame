@@ -4,10 +4,9 @@ import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
 import { expensionManager } from "./ExpensionManager";
 import { Island } from "./Island";
-import { computeManhattanDistance, debug } from "./helpers";
+import { computeManhattanDistance, debug, debugTime } from "./helpers";
 import {
   blocks,
-  debugTime,
   height,
   islands,
   map,
