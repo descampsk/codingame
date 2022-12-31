@@ -93,13 +93,13 @@ export class RobotManager {
 
           // Ordre de priorité
           // - si case ennemie, on tue les robots en premier si mon robot est plus proche de mon point de départ que celui de l'ennemie
-          // - ennemie avant vide
           // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
           if (
             isNearerOfMyStartA &&
             isNearerOfMyStartB &&
-            (a.owner === Owner.OPPONENT || b.owner === Owner.OPPONENT)
+            ((a.owner === Owner.OPPONENT && a.units > 0) ||
+              (b.owner === Owner.OPPONENT && b.units > 0))
           )
             return (
               (b.owner === Owner.OPPONENT ? b.units : 0) -

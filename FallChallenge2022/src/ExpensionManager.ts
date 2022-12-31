@@ -27,7 +27,7 @@ export class ExtensionManager {
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
 
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {

@@ -15,7 +15,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -151,7 +151,7 @@ export class RobotBuilder {
     });
     const end = new Date().getTime() - start.getTime();
     if (debugTime) this.debug(`computeNormalSpawn time: ${end} ms`);
-    return blocksToSpawn;
+    return blocksToSpawn.slice(0, 3);
   }
 
   action() {

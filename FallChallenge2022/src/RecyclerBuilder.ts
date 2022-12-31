@@ -28,7 +28,7 @@ import { ia } from "./IA";
 export class RecyclerBuilder {
   private hasBuildLastRound = false;
 
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
