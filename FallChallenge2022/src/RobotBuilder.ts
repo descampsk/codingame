@@ -15,7 +15,7 @@ import {
 } from "./State";
 
 export class RobotBuilder {
-  private SHOULD_DEBUG = true;
+  private SHOULD_DEBUG = false;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -42,14 +42,6 @@ export class RobotBuilder {
       );
     for (const block of blocksToSpawn) {
       for (const robot of opponentRobots) {
-        // debug(
-        //   "BlockUnits",
-        //   [block.x, block.y],
-        //   block.units,
-        //   myMatter,
-        //   [robot.x, robot.y],
-        //   robot.units
-        // );
         if (
           side * (robot.x - block.x) === 1 &&
           robot.y === block.y &&
@@ -104,23 +96,18 @@ export class RobotBuilder {
         minToOpponent: number;
         minToNone: number;
         potential: number;
+        neighborRobots: number;
       }
     > = new Map();
     for (const block of blocksToSpawn) {
       let minToNone = Infinity;
       let minToOpponent = Infinity;
       const { neighbors } = block;
-      const hasNeighborEnnemy = !!neighbors.find(
-        (neighbor) => neighbor.owner === Owner.OPPONENT
-      );
-      const hasNeighborNone = !!neighbors.find(
-        (neighbor) => neighbor.owner === Owner.NONE
-      );
-      if (hasNeighborEnnemy) {
-        minToOpponent = 1;
-      }
-      if (hasNeighborNone) {
-        minToNone = 1;
+      let neighborRobots = 0;
+      for (const neighbor of neighbors) {
+        if (neighbor.owner === Owner.ME) neighborRobots += neighbor.units;
+        if (neighbor.owner === Owner.OPPONENT) minToOpponent = 1;
+        if (neighbor.owner === Owner.NONE) minToNone = 1;
       }
       if (minToOpponent === Infinity) {
         for (const emptyBlock of notMyBlocks) {
@@ -136,18 +123,25 @@ export class RobotBuilder {
       }
       const potentialRadius = 5;
       const potential = block.getPotentiel(potentialRadius);
-      sortingCriteria.set(block, { minToNone, minToOpponent, potential });
+      sortingCriteria.set(block, {
+        minToNone,
+        minToOpponent,
+        potential,
+        neighborRobots,
+      });
     }
     blocksToSpawn.sort((a, b) => {
       const {
         minToNone: minToNoneA,
         minToOpponent: minToOpponentA,
         potential: potentialA,
+        neighborRobots: neighborRobotsA,
       } = sortingCriteria.get(a)!;
       const {
         minToNone: minToNoneB,
         minToOpponent: minToOpponentB,
         potential: potentialB,
+        neighborRobots: neighborRobotsB,
       } = sortingCriteria.get(b)!;
 
       // Ordre de priorité
@@ -160,8 +154,14 @@ export class RobotBuilder {
         return minToOpponentA - minToOpponentB;
       if (minToOpponentA === Infinity && minToNoneA !== minToNoneB)
         return minToNoneA - minToNoneB;
-      if (potentialA !== potentialB) return potentialB - potentialA;
-      if (a.units !== b.units) return a.units - b.units;
+      if (
+        potentialA !== potentialB &&
+        neighborRobotsA <= 3 &&
+        neighborRobotsB <= 3
+      )
+        return potentialB - potentialA;
+      if (neighborRobotsA !== neighborRobotsB)
+        return neighborRobotsA - neighborRobotsB;
       return side * (b.x - a.x);
     });
     const end = new Date().getTime() - start.getTime();

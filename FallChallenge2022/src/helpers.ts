@@ -1,9 +1,9 @@
 import { readFileSync } from "fs";
 import { Block } from "./Block";
 
-export const debugTime = true;
+export const debugTime = false;
 
-export const DEBUG = true;
+export const DEBUG = false;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const debug = (...data: any[]) => {

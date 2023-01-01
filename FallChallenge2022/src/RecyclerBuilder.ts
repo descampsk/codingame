@@ -37,28 +37,54 @@ export class RecyclerBuilder {
     if (this.SHOULD_DEBUG) debug("[RecyclerBuilder]", ...data);
   }
 
-  findBestRecyclers(map: Block[][]) {
-    const bestRecyclers = map
-      .flat()
-      .filter((block) => block.initialOwner === Owner.ME);
-    for (const block of bestRecyclers) {
-      block.computeGains();
+  computeIncomes() {
+    let myIncome = 0;
+    let opponentIncome = 0;
+    for (const recycler of myRecyclers) {
+      this.debug("Gains", recycler.computeGains(Owner.ME));
+      myIncome += recycler.computeGains(Owner.ME).gains;
     }
-    bestRecyclers.sort((a, b) => {
+    for (const recycler of opponentRecyclers) {
+      opponentIncome += recycler.computeGains(Owner.OPPONENT).gains;
+    }
+
+    this.debug("Incomes", { myIncome, opponentIncome });
+    return {
+      myIncome,
+      opponentIncome,
+    };
+  }
+
+  findBestRecyclers(map: Block[][]) {
+    if (this.bestRecyclers.length) return;
+
+    this.bestRecyclers = map
+      .flat()
+      .filter(
+        (block) =>
+          block.initialOwner === Owner.ME && block.computeGains().gains > 20
+      );
+    this.bestRecyclers.sort((a, b) => {
       const {
         gains: gainsA,
         gainsPerTurn: gainsPerTurnA,
         grassCreated: grassCreatedA,
+        gainsPerGrassCreated: gainsPerGrassCreatedA,
       } = a.computeGains();
       const {
         gains: gainsB,
         gainsPerTurn: gainsPerTurnB,
         grassCreated: grassCreatedB,
+        gainsPerGrassCreated: gainsPerGrassCreatedB,
       } = b.computeGains();
-      const potentialA = gainsA - 10 - grassCreatedA * 2;
-      const potentialB = gainsB - 10 - grassCreatedB * 2;
-      return potentialA - potentialB;
+      return gainsPerGrassCreatedB - gainsPerGrassCreatedA;
     });
+    this.debug(
+      "BestRecyclers",
+      this.bestRecyclers
+        .slice(0, 10)
+        .map((block) => [block.x, block.y, block.computeGains()])
+    );
   }
 
   willCreateNewIsland(block: Block) {
@@ -167,16 +193,8 @@ export class RecyclerBuilder {
         (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
     );
     const bestRecyclers: Heapq<Block> = new Heapq<Block>([], (a, b) => {
-      const {
-        gains: gainA,
-        gainsPerTurn: gainsPerTurnA,
-        grassCreated: grassCreatedA,
-      } = a.computeGains();
-      const {
-        gains: gainB,
-        gainsPerTurn: gainsPerTurnB,
-        grassCreated: grassCreatedB,
-      } = b.computeGains();
+      const { gainsPerGrassCreated: gainsPerGrassCreatedA } = a.computeGains();
+      const { gainsPerGrassCreated: gainsPerGrassCreatedB } = b.computeGains();
       const aIsSeparation = a.isOnSeparation;
       const bIsSeparation = b.isOnSeparation;
       if (aIsSeparation && !bIsSeparation) return true;
@@ -185,10 +203,8 @@ export class RecyclerBuilder {
         if (a.initialOwner === Owner.OPPONENT) return true;
         if (b.initialOwner === Owner.OPPONENT) return false;
       }
-      if (grassCreatedA !== grassCreatedB) return grassCreatedA < grassCreatedB;
-      if (gainsPerTurnA !== gainsPerTurnB) return gainsPerTurnB < gainsPerTurnA;
 
-      return gainB < gainA;
+      return gainsPerGrassCreatedB < gainsPerGrassCreatedA;
     });
     for (const recycler of possibleRecyclers) {
       bestRecyclers.push(recycler);
@@ -262,6 +278,8 @@ export class RecyclerBuilder {
   }
 
   action() {
+    this.findBestRecyclers(map);
+
     const start = new Date();
     const defensiveActions = this.buildDefensive();
     if (defensiveActions.length) {

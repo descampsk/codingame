@@ -27,7 +27,7 @@ export class ExtensionManager {
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
 
-  private SHOULD_DEBUG = false;
+  private SHOULD_DEBUG = true;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
@@ -275,9 +275,9 @@ export class ExtensionManager {
       robots.splice(bestRobotIndex, 1);
       // Sometimes it s better to let this robot move because it try to go in a too far away block
       // We just remove it and let the expension robot builder create a new way in a better place
-      if (minDistance - 2 > maxDistanceFromStartToSeparation - turn) {
+      if (minDistance - 5 > maxDistanceFromStartToSeparation - turn) {
         this.debug(
-          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${maxDistanceFromStartToSeparation} - ${turn} + 2 so we prefer to find an other robot.`
+          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${maxDistanceFromStartToSeparation} - ${turn} + 5 so we prefer to find an other robot.`
         );
         continue;
       }
