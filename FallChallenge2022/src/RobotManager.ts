@@ -72,7 +72,7 @@ export class RobotManager {
         .filter((block) => {
           const { willBecomeGrass } = block;
           if (willBecomeGrass === Infinity) return true;
-          return willBecomeGrass > robot.distanceToBlock(block);
+          return willBecomeGrass > 1;
         })
         .sort((a, b) => {
           const potentielRadius =

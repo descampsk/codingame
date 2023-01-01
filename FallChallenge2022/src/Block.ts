@@ -2,7 +2,7 @@
 /* eslint-disable no-useless-constructor */
 import { expensionManager } from "./ExpensionManager";
 import { dijtstraAlgorithm } from "./djikstra";
-import { computeManhattanDistance, minBy } from "./helpers";
+import { computeManhattanDistance, debug, minBy } from "./helpers";
 import { Island } from "./Island";
 import { height, map, myRecyclers, notMyBlocks, Owner, width } from "./State";
 
@@ -200,13 +200,29 @@ export class Block {
   getPotentiel(radius: number) {
     if (this.potentiel) return this.potentiel;
     this.potentiel = 0;
-    for (let i = 0; i < notMyBlocks.length; i++) {
-      const block = notMyBlocks[i];
-      let distance = this.distanceToBlock(block);
-      if (distance === 0) distance = 0.5;
-      if (distance <= radius) {
-        if (block.owner === Owner.OPPONENT) this.potentiel += 2 / distance;
-        else if (block.owner === Owner.NONE) this.potentiel += 1 / distance;
+    const hasVisited: Set<Block> = new Set();
+    hasVisited.add(this);
+
+    let nextBlocks: Block[] = [this];
+    for (let i = 0; i <= radius; i++) {
+      const currentBlocks = Array.from(nextBlocks);
+      nextBlocks = [];
+      const distance = i === 0 ? 0.5 : i;
+      while (currentBlocks.length) {
+        const currentBlock = currentBlocks.pop()!;
+        if (currentBlock.owner === Owner.OPPONENT)
+          this.potentiel += 2 / distance;
+        else if (currentBlock.owner === Owner.NONE)
+          this.potentiel += 1 / distance;
+        for (const neighbor of currentBlock.neighbors) {
+          if (!hasVisited.has(neighbor) && neighbor.canMove) {
+            hasVisited.add(neighbor);
+            nextBlocks.push(neighbor);
+          }
+        }
+      }
+      if (!nextBlocks.length) {
+        return this.potentiel;
       }
     }
     return this.potentiel;

@@ -30,9 +30,35 @@ export class RecyclerBuilder {
 
   private SHOULD_DEBUG = false;
 
+  public bestRecyclers: Block[] = [];
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private debug(...data: any[]) {
     if (this.SHOULD_DEBUG) debug("[RecyclerBuilder]", ...data);
+  }
+
+  findBestRecyclers(map: Block[][]) {
+    const bestRecyclers = map
+      .flat()
+      .filter((block) => block.initialOwner === Owner.ME);
+    for (const block of bestRecyclers) {
+      block.computeGains();
+    }
+    bestRecyclers.sort((a, b) => {
+      const {
+        gains: gainsA,
+        gainsPerTurn: gainsPerTurnA,
+        grassCreated: grassCreatedA,
+      } = a.computeGains();
+      const {
+        gains: gainsB,
+        gainsPerTurn: gainsPerTurnB,
+        grassCreated: grassCreatedB,
+      } = b.computeGains();
+      const potentialA = gainsA - 10 - grassCreatedA * 2;
+      const potentialB = gainsB - 10 - grassCreatedB * 2;
+      return potentialA - potentialB;
+    });
   }
 
   willCreateNewIsland(block: Block) {

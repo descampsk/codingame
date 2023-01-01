@@ -109,14 +109,29 @@ export class RobotBuilder {
     for (const block of blocksToSpawn) {
       let minToNone = Infinity;
       let minToOpponent = Infinity;
-      for (const emptyBlock of notMyBlocks) {
-        const distance = block.distanceToBlock(emptyBlock);
-        if (emptyBlock.owner === Owner.OPPONENT) {
-          if (distance < minToOpponent) {
-            minToOpponent = distance;
+      const { neighbors } = block;
+      const hasNeighborEnnemy = !!neighbors.find(
+        (neighbor) => neighbor.owner === Owner.OPPONENT
+      );
+      const hasNeighborNone = !!neighbors.find(
+        (neighbor) => neighbor.owner === Owner.NONE
+      );
+      if (hasNeighborEnnemy) {
+        minToOpponent = 1;
+      }
+      if (hasNeighborNone) {
+        minToNone = 1;
+      }
+      if (minToOpponent === Infinity) {
+        for (const emptyBlock of notMyBlocks) {
+          const distance = block.distanceToBlock(emptyBlock);
+          if (emptyBlock.owner === Owner.OPPONENT) {
+            if (distance < minToOpponent) {
+              minToOpponent = distance;
+            }
+          } else if (distance < minToNone) {
+            minToNone = distance;
           }
-        } else if (distance < minToNone) {
-          minToNone = distance;
         }
       }
       const potentialRadius = 5;

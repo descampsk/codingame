@@ -32,7 +32,7 @@ export const dijtstraAlgorithm = (
         !hasVisited.has(`${xToUpdate},${yToUpdate}`) &&
         map[xToUpdate][yToUpdate].canMove // &&
         // Performance optimisation as we never try to move 10 blocks away
-        // distances[x][y] < 20
+        // distances[x][y] < depth
       ) {
         const newValue = 1 + distances[x][y];
         if (newValue < distances[xToUpdate][yToUpdate]) {
@@ -43,9 +43,18 @@ export const dijtstraAlgorithm = (
       }
     }
     currentBlock = nextBlocks.length() ? nextBlocks.pop() : null;
+    const currentTime = new Date().getTime() - start.getTime();
+    if (currentTime > 5) {
+      debug(
+        `dijtstraAlgorithm for ${startingBlocks[0][1]},${startingBlocks[0][0]} was cut because time: ${currentTime}ms higher than 5ms`
+      );
+      return distances;
+    }
   }
   const end = new Date().getTime() - start.getTime();
   if (debugTime)
-    debug(`dijtstraAlgorithm for ${startingBlocks} - time: ${end}ms`);
+    debug(
+      `dijtstraAlgorithm for ${startingBlocks[0][1]},${startingBlocks[0][0]} - time: ${end}ms`
+    );
   return distances;
 };

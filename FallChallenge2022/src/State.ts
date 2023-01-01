@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Block } from "./Block";
-import { expensionManager } from "./ExpensionManager";
+import { dijtstraAlgorithm } from "./djikstra";
 import { debug, debugTime } from "./helpers";
 import { Island } from "./Island";
 
@@ -35,6 +35,9 @@ export const map: Block[][] = [];
 export let startPositionFound = false;
 export let myStartPosition: Block = {} as Block;
 export let opponentStartPosition: Block = {} as Block;
+
+export let hasOneBlockedTransformedIntoGrassOrRecycler = false;
+export let isStartDjikstraMapComputed = false;
 
 export const separation: Block[] = [];
 
@@ -90,6 +93,11 @@ export const parseLineToMap = (
   const canBuild = parseInt(inputs[4]) > 0;
   const canSpawn = parseInt(inputs[5]) > 0;
   const inRangeOfRecycler = parseInt(inputs[6]) > 0;
+  // if (
+  //   (map[i][j].scrapAmount > 0 && scrapAmount === 0) ||
+  //   (!map[i][j].recycler && recycler)
+  // )
+  //   hasOneBlockedTransformedIntoGrassOrRecycler = true;
   mapToUpdate[i][j].update({
     scrapAmount,
     owner,
@@ -108,6 +116,7 @@ export const readInputs = () => {
   const matters = mattersLine.split(" ");
   myMatter = parseInt(matters[0]);
   oppMatter = parseInt(matters[1]);
+  hasOneBlockedTransformedIntoGrassOrRecycler = false;
   for (let i = 0; i < height; i++) {
     for (let j = 0; j < width; j++) {
       const line = readline();
@@ -132,6 +141,7 @@ export const computeData = () => {
   opponentRecyclers = [];
 
   blocks.forEach((block) => {
+    // if (hasOneBlockedTransformedIntoGrassOrRecycler) block.resetDjikstraMap();
     block.updateNeighbors(map);
     if (block.owner === Owner.ME) myBlocks.push(block);
     if (block.owner !== Owner.ME && block.canMove) notMyBlocks.push(block);
@@ -152,6 +162,14 @@ export const computeData = () => {
 
   const end = new Date().getTime() - start.getTime();
   if (debugTime) debug("computeData time: %dms", end);
+};
+
+export const computeDjikstraMap = (forceRest = false) => {
+  if (isStartDjikstraMapComputed && !forceRest) return;
+  for (const block of blocks) {
+    block.djikstraMap = dijtstraAlgorithm(map, [[block.y, block.x]]);
+  }
+  isStartDjikstraMapComputed = true;
 };
 
 export const computeStartPosition = (forceReset = false) => {
@@ -184,6 +202,7 @@ export const computeStartPosition = (forceReset = false) => {
 export const refresh = () => {
   turn += 1;
   computeData();
+  // computeDjikstraMap();
   computeStartPosition();
   islands = Island.findIslands(map);
   //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
