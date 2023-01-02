@@ -61,9 +61,11 @@ export class RecyclerBuilder extends ClassLogger {
     });
     this.debug(
       "BestRecyclers",
-      this.bestRecyclers
-        .slice(0, 10)
-        .map((block) => [block.x, block.y, block.computeGains()])
+      this.bestRecyclers.map((block) => [
+        block.x,
+        block.y,
+        block.computeGains(),
+      ])
     );
   }
 

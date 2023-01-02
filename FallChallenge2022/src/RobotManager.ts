@@ -24,7 +24,7 @@ export class RobotManager extends ClassLogger {
     const actions: Action[] = [];
 
     const robotsToMove = myBlocks
-      .filter((block) => block.units > 0)
+      .filter((block) => block.units > 0 && block.hasMoved < block.units)
       .flatMap((robot) => robot.getOneRobotPerUnit());
 
     for (const robot of robotsToMove.filter((robot) => !robot.hasMoved)) {

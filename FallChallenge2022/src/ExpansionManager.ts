@@ -223,7 +223,7 @@ export class ExpansionManager extends ClassLogger {
     const start = new Date();
     const actions: Action[] = [];
     const robots = myBlocks
-      .filter((block) => block.units > 0)
+      .filter((block) => block.units > 0 && block.hasMoved < block.units)
       .flatMap((robot) => robot.getOneRobotPerUnit());
     const maxDistanceFromStartToSeparation = maxBy(this.separation, (block) =>
       myStartPosition.distanceToBlock(block)
