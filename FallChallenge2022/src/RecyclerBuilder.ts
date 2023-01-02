@@ -145,6 +145,7 @@ export class RecyclerBuilder extends ClassLogger {
   shouldBuildNaiveRecycler() {
     const notGrassBlocks = blocks.filter((block) => !block.isGrass);
     const should =
+      myMatter >= 10 &&
       turn > 2 &&
       !this.hasBuildLastRound &&
       (notGrassBlocks.length >= 80 ||
@@ -171,7 +172,8 @@ export class RecyclerBuilder extends ClassLogger {
     const possibleRecyclers = myBlocks.filter(
       (block) =>
         block.canBuild &&
-        block.computeGains().gains > 20 &&
+        (block.computeGains().gains > 20 ||
+          [Owner.BOTH, Owner.OPPONENT].includes(block.initialOwner)) &&
         (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
     );
     const bestRecyclers: Heapq<Block> = new Heapq<Block>([], (a, b) => {

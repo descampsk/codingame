@@ -53,6 +53,7 @@ export class DefenseManager extends ClassLogger {
   private builDefensiveRecycler(dangerousRobot: Block, blockToDefend: Block) {
     if (
       dangerousRobot.units > 1 ||
+      blockToDefend.computeGains().gains > 30 ||
       [Owner.BOTH || Owner.OPPONENT].includes(blockToDefend.initialOwner) ||
       opponentRecyclers.length > myRecyclers.length
     ) {
@@ -138,14 +139,14 @@ export class DefenseManager extends ClassLogger {
         for (const neighbor of neighborsWithUnits) {
           const robotsToMove =
             neighbor.units >= unitsToHave - unitsToDefend
-              ? unitsToHave
+              ? unitsToHave - unitsToDefend
               : neighbor.units;
           unitsToDefend += robotsToMove;
           this.debug(
             `Moving ${robotsToMove} robots from ${neighbor.x},${neighbor.y} to ${blockToDefend.x},${blockToDefend.y} to defend. We have now ${unitsToDefend} units to defend.`
           );
           actions.push(new MoveAction(robotsToMove, neighbor, blockToDefend));
-          if (unitsToDefend >= unitsToHave) continue;
+          if (unitsToDefend >= unitsToHave) break;
         }
       } else {
         this.debug(
