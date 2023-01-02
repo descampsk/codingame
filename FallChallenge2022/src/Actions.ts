@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable max-classes-per-file */
 import { Block } from "./Block";
-import { map, myMatter, myRecyclers, setMyMatter } from "./State";
+import { Owner, map, myMatter, myRecyclers, setMyMatter } from "./State";
 import { debug } from "./helpers";
 
 export interface Action {
@@ -19,6 +19,9 @@ export class MoveAction implements Action {
     if (this.origin.owner === this.destination.owner) {
       this.destination.units += this.amount;
       this.destination.hasMoved += this.amount;
+    }
+    if (this.destination.owner === Owner.NONE) {
+      this.destination.units += this.amount;
     }
   }
 
@@ -59,6 +62,7 @@ export class BuildAction implements Action {
 export class SpawnAction implements Action {
   constructor(private amount: number, public block: Block) {
     this.block.units += amount;
+    this.block.hasMoved += amount;
     setMyMatter(myMatter - 10 * amount);
 
     this.amount = amount;

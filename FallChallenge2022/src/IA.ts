@@ -1,5 +1,6 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MessageAction } from "./Actions";
+import { defenseManager } from "./DefenseManager";
 import { expensionManager } from "./ExpansionManager";
 import { debug } from "./helpers";
 import { recyclerBuilder } from "./RecyclerBuilder";
@@ -26,11 +27,13 @@ export class IA {
   turnsWithSameActions = 0;
 
   chooseAction() {
+    const defenseActions = defenseManager.computeDefense();
     const recyclerActions = recyclerBuilder.action();
     const moveToSeparationActions = expensionManager.moveAndBuildToSeparation();
     const robotActions = robotManager.action();
     const robotBuilderActions = robotBuilder.action();
     this.actions = [
+      ...defenseActions,
       ...recyclerActions,
       ...moveToSeparationActions,
       ...robotActions,

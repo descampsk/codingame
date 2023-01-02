@@ -23,7 +23,7 @@ import { ia } from "./IA";
 import { ClassLogger } from "./ClassLogger";
 
 export class RecyclerBuilder extends ClassLogger {
-  private hasBuildLastRound = false;
+  public hasBuildLastRound = false;
 
   public bestRecyclers: Block[] = [];
 
@@ -263,13 +263,13 @@ export class RecyclerBuilder extends ClassLogger {
     this.findBestRecyclers(map);
 
     const start = new Date();
-    const defensiveActions = this.buildDefensive();
-    if (defensiveActions.length) {
-      this.debug("defensiveBuild: ", defensiveActions.length);
-      const end = new Date().getTime() - start.getTime();
-      if (debugTime) this.debug(`action time: ${end} ms`);
-      return defensiveActions;
-    }
+    // const defensiveActions = this.buildDefensive();
+    // if (defensiveActions.length) {
+    //   this.debug("defensiveBuild: ", defensiveActions.length);
+    //   const end = new Date().getTime() - start.getTime();
+    //   if (debugTime) this.debug(`action time: ${end} ms`);
+    //   return defensiveActions;
+    // }
 
     if (this.shouldBuildNaiveRecycler()) {
       const actions = this.buildNaiveRecycler();

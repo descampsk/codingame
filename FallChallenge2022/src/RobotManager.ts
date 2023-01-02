@@ -27,7 +27,7 @@ export class RobotManager extends ClassLogger {
       .filter((block) => block.units > 0 && block.hasMoved < block.units)
       .flatMap((robot) => robot.getOneRobotPerUnit());
 
-    for (const robot of robotsToMove.filter((robot) => !robot.hasMoved)) {
+    for (const robot of robotsToMove) {
       const nearestEmptyBlocks = robot.neighbors
         .filter((block) => {
           const { willBecomeGrass } = block;

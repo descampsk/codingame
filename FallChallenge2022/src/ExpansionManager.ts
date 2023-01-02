@@ -126,7 +126,11 @@ export class ExpansionManager extends ClassLogger {
       separationMap.set(`${block.x},${block.y}`, block);
     }
     this.separation.splice(0);
-    this.separation.push(...separationMap.values());
+    this.separation.push(
+      ...Array.from(separationMap.values()).filter(
+        (block) => block.neighbors.length > 1
+      )
+    );
 
     this.debug(
       "Separation",
@@ -157,13 +161,19 @@ export class ExpansionManager extends ClassLogger {
     const start = new Date();
     const actions: Action[] = [];
     const remainingSeparation = this.separation.filter(
-      (block) => block.owner === Owner.NONE && block.canMove
+      (block) =>
+        // units = 0 because an other unit could move there to defend and update the block units
+        block.owner === Owner.NONE && block.canMove && block.units === 0
     );
     // .sort(
     //   (a, b) =>
     //     computeManhattanDistance(a, myStartPosition) -
     //     computeManhattanDistance(b, myStartPosition)
     // );
+    this.debug(
+      "RemainingSeparation",
+      remainingSeparation.map((block) => [block.x, block.y])
+    );
     actions.push(
       ...this.moveToSeparation(remainingSeparation),
       ...this.buildToSeparation(remainingSeparation)

@@ -26,9 +26,7 @@ export class Island extends ClassLogger {
         (block) => block.owner === Owner.ME && block.canSpawn
       ) >= 0;
     const hasOpponentBlock =
-      this.blocks.findIndex(
-        (block) => block.owner === Owner.OPPONENT && block.units > 0
-      ) >= 0;
+      this.blocks.findIndex((block) => block.owner === Owner.OPPONENT) >= 0;
     if (hasMineBlock && hasOpponentBlock) return Owner.BOTH;
     if (hasMineBlock) return Owner.ME;
     if (hasOpponentBlock) return Owner.OPPONENT;
@@ -66,15 +64,15 @@ export class Island extends ClassLogger {
       );
     }
 
-    // debug(
-    //   "[Islands]",
-    //   islands.length,
-    //   islands.map((island) => ({
-    //     size: island.size,
-    //     owner: island.owner,
-    //     origin: [island.blocks[0].x, island.blocks[0].y],
-    //   }))
-    // );
+    debug(
+      "[Islands]",
+      islands.length,
+      islands.map((island) => ({
+        size: island.size,
+        owner: island.owner,
+        origin: [island.blocks[0].x, island.blocks[0].y],
+      }))
+    );
 
     const end = new Date().getTime() - start.getTime();
     if (debugTime) debug("findIslands time: %dms", end);

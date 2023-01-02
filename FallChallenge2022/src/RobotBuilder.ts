@@ -164,7 +164,7 @@ export class RobotBuilder extends ClassLogger {
   }
 
   action() {
-    const actions: Action[] = this.computeDefensiveSpawn();
+    const actions: Action[] = []; // this.computeDefensiveSpawn();
     const blocksToSpawn: Block[] = this.computeNormalSpawn();
 
     let blockToSpawnIndex = 0;

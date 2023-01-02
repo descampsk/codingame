@@ -207,7 +207,7 @@ export class Block {
 
   getOneRobotPerUnit() {
     const robots: Block[] = [];
-    for (let i = 0; i < this.units; i++) {
+    for (let i = 0; i < this.units - this.hasMoved; i++) {
       robots.push(this);
     }
     return robots;
