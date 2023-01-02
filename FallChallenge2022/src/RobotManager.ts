@@ -3,6 +3,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MoveAction } from "./Actions";
 import { Block } from "./Block";
+import { ClassLogger } from "./ClassLogger";
 import { computeManhattanDistance, debug, debugTime } from "./helpers";
 import {
   myRobots,
@@ -14,15 +15,8 @@ import {
   opponentStartPosition,
 } from "./State";
 
-export class RobotManager {
+export class RobotManager extends ClassLogger {
   public robotsToMove: Block[] = [];
-
-  private SHOULD_DEBUG = false;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private debug(...data: any[]) {
-    if (this.SHOULD_DEBUG) debug("[RobotManager]", ...data);
-  }
 
   computeDefensiveMove() {
     const start = new Date();

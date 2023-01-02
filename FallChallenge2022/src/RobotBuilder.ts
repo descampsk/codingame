@@ -2,6 +2,7 @@
 /* eslint-disable class-methods-use-this */
 import { Action, SpawnAction } from "./Actions";
 import { Block } from "./Block";
+import { ClassLogger } from "./ClassLogger";
 import { computeManhattanDistance, debug, debugTime, minBy } from "./helpers";
 import {
   map,
@@ -14,14 +15,7 @@ import {
   side,
 } from "./State";
 
-export class RobotBuilder {
-  private SHOULD_DEBUG = false;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private debug(...data: any[]) {
-    if (this.SHOULD_DEBUG) debug("[RobotBuilder]", ...data);
-  }
-
+export class RobotBuilder extends ClassLogger {
   computeDefensiveSpawn() {
     const start = new Date();
 

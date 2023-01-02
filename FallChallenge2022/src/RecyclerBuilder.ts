@@ -24,18 +24,12 @@ import {
   width,
 } from "./State";
 import { ia } from "./IA";
+import { ClassLogger } from "./ClassLogger";
 
-export class RecyclerBuilder {
+export class RecyclerBuilder extends ClassLogger {
   private hasBuildLastRound = false;
 
-  private SHOULD_DEBUG = false;
-
   public bestRecyclers: Block[] = [];
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private debug(...data: any[]) {
-    if (this.SHOULD_DEBUG) debug("[RecyclerBuilder]", ...data);
-  }
 
   computeIncomes() {
     let myIncome = 0;

@@ -2,20 +2,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-useless-constructor */
 import { Block } from "./Block";
+import { ClassLogger } from "./ClassLogger";
 import { debug, debugTime } from "./helpers";
 import { Owner } from "./State";
 
-export class Island {
-  private SHOULD_DEBUG = true;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  debug(...data: any[]) {
-    if (this.SHOULD_DEBUG) debug("[Island]", ...data);
-  }
-
+export class Island extends ClassLogger {
   public blocks: Block[] = [];
-
-  constructor() {}
 
   public get size() {
     return this.blocks.length;
@@ -74,15 +66,15 @@ export class Island {
       );
     }
 
-    debug(
-      "[Islands]",
-      islands.length,
-      islands.map((island) => ({
-        size: island.size,
-        owner: island.owner,
-        origin: [island.blocks[0].x, island.blocks[0].y],
-      }))
-    );
+    // debug(
+    //   "[Islands]",
+    //   islands.length,
+    //   islands.map((island) => ({
+    //     size: island.size,
+    //     owner: island.owner,
+    //     origin: [island.blocks[0].x, island.blocks[0].y],
+    //   }))
+    // );
 
     const end = new Date().getTime() - start.getTime();
     if (debugTime) debug("findIslands time: %dms", end);

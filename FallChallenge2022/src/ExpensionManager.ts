@@ -1,14 +1,10 @@
+/* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Action, MoveAction, SpawnAction } from "./Actions";
 import { Block } from "./Block";
+import { ClassLogger } from "./ClassLogger";
 import { dijtstraAlgorithm } from "./djikstra";
-import {
-  computeManhattanDistance,
-  debug,
-  debugTime,
-  maxBy,
-  minBy,
-} from "./helpers";
+import { computeManhattanDistance, debugTime, maxBy, minBy } from "./helpers";
 import {
   map,
   myBlocks,
@@ -20,19 +16,12 @@ import {
   turn,
 } from "./State";
 
-export class ExtensionManager {
+export class ExtensionManager extends ClassLogger {
   public separation: Block[] = [];
 
   public djikstraMap: Map<Block, number[][]> = new Map();
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
-
-  private SHOULD_DEBUG = true;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private debug(...data: any[]) {
-    if (this.SHOULD_DEBUG) debug("[ExpensionManager]", ...data);
-  }
 
   computeSeparation() {
     if (this.separation.length) return;

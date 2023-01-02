@@ -42,7 +42,6 @@ export let isStartDjikstraMapComputed = false;
 export const separation: Block[] = [];
 
 export let blocks: Block[] = [];
-export let emptyBlocks: Block[] = [];
 
 export let islands: Island[] = [];
 
@@ -134,7 +133,6 @@ export const computeData = () => {
   myBlocks = [];
   notMyBlocks = [];
   opponentBlocks = [];
-  emptyBlocks = [];
   myRobots = [];
   opponentRobots = [];
   myRecyclers = [];
@@ -146,7 +144,6 @@ export const computeData = () => {
     if (block.owner === Owner.ME) myBlocks.push(block);
     if (block.owner !== Owner.ME && block.canMove) notMyBlocks.push(block);
     if (block.owner === Owner.OPPONENT) opponentBlocks.push(block);
-    if (block.owner === Owner.NONE) emptyBlocks.push(block);
     if (block.owner === Owner.ME && block.units) {
       for (let i = 0; i < block.units; i++) myRobots.push(block);
     }
