@@ -16,7 +16,7 @@ import {
   turn,
 } from "./State";
 
-export class ExtensionManager extends ClassLogger {
+export class ExpansionManager extends ClassLogger {
   public separation: Block[] = [];
 
   public djikstraMap: Map<Block, number[][]> = new Map();
@@ -130,7 +130,11 @@ export class ExtensionManager extends ClassLogger {
 
     this.debug(
       "Separation",
-      this.separation.map((block) => [block.x, block.y])
+      this.separation.map((block) => [
+        block.x,
+        block.y,
+        this.mapOwner[block.y][block.x],
+      ])
     );
 
     const end = new Date().getTime() - start.getTime();
@@ -218,7 +222,9 @@ export class ExtensionManager extends ClassLogger {
   moveToSeparation(remainingSeparation: Block[]) {
     const start = new Date();
     const actions: Action[] = [];
-    const robots = myRobots.filter((robot) => !robot.hasMoved);
+    const robots = myBlocks
+      .filter((block) => block.units > 0)
+      .flatMap((robot) => robot.getOneRobotPerUnit());
     const maxDistanceFromStartToSeparation = maxBy(this.separation, (block) =>
       myStartPosition.distanceToBlock(block)
     ).maxValue!;
@@ -275,7 +281,6 @@ export class ExtensionManager extends ClassLogger {
         `BestRobot ${bestRobot.x},${bestRobot.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
       );
 
-      if (bestRobot.units === 1) bestRobot.hasMoved = true;
       remainingSeparation.splice(bestDestinationIndex, 1);
       const sameHigh = bestDestination.y === bestRobot.y;
       if (sameHigh) {
@@ -329,4 +334,4 @@ export class ExtensionManager extends ClassLogger {
   }
 }
 
-export const expensionManager = new ExtensionManager();
+export const expensionManager = new ExpansionManager();

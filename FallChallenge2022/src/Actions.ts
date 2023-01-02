@@ -16,8 +16,10 @@ export class MoveAction implements Action {
     public destination: Block
   ) {
     this.origin.units -= this.amount;
-    if (this.origin.owner === this.destination.owner)
+    if (this.origin.owner === this.destination.owner) {
       this.destination.units += this.amount;
+      this.destination.hasMoved += this.amount;
+    }
   }
 
   equals(action: Action) {

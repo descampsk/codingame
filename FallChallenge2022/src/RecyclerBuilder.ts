@@ -2,12 +2,10 @@
 import { Heapq } from "ts-heapq";
 import { Action, BuildAction } from "./Actions";
 import { Block } from "./Block";
-import { expensionManager } from "./ExpensionManager";
 import { Island } from "./Island";
 import { computeManhattanDistance, debug, debugTime } from "./helpers";
 import {
   blocks,
-  height,
   islands,
   map,
   myBlocks,
@@ -15,13 +13,11 @@ import {
   myRecyclers,
   myRobots,
   myStartPosition,
-  opponentBlocks,
   opponentRecyclers,
   opponentRobots,
   Owner,
   side,
   turn,
-  width,
 } from "./State";
 import { ia } from "./IA";
 import { ClassLogger } from "./ClassLogger";
@@ -59,18 +55,8 @@ export class RecyclerBuilder extends ClassLogger {
           block.initialOwner === Owner.ME && block.computeGains().gains > 20
       );
     this.bestRecyclers.sort((a, b) => {
-      const {
-        gains: gainsA,
-        gainsPerTurn: gainsPerTurnA,
-        grassCreated: grassCreatedA,
-        gainsPerGrassCreated: gainsPerGrassCreatedA,
-      } = a.computeGains();
-      const {
-        gains: gainsB,
-        gainsPerTurn: gainsPerTurnB,
-        grassCreated: grassCreatedB,
-        gainsPerGrassCreated: gainsPerGrassCreatedB,
-      } = b.computeGains();
+      const { gainsPerGrassCreated: gainsPerGrassCreatedA } = a.computeGains();
+      const { gainsPerGrassCreated: gainsPerGrassCreatedB } = b.computeGains();
       return gainsPerGrassCreatedB - gainsPerGrassCreatedA;
     });
     this.debug(

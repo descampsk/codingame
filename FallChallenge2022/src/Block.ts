@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-useless-constructor */
-import { expensionManager } from "./ExpensionManager";
+import { expensionManager } from "./ExpansionManager";
 import { dijtstraAlgorithm } from "./djikstra";
 import { computeManhattanDistance, minBy } from "./helpers";
 import { Island } from "./Island";
@@ -24,7 +24,7 @@ export class Block {
   // eslint-disable-next-line no-use-before-define
   public neighborsWithRecycler: Block[] = [];
 
-  public hasMoved = false;
+  public hasMoved = 0;
 
   private potentiel: number | null = null;
 
@@ -172,7 +172,7 @@ export class Block {
     this.djikstraMap = [];
     this.potentiel = null;
     this.gains = null;
-    this.hasMoved = false;
+    this.hasMoved = 0;
   }
 
   distanceToBlock(block: Block) {
@@ -203,6 +203,14 @@ export class Block {
 
   public get initialOwner() {
     return expensionManager.mapOwner[this.y][this.x].owner;
+  }
+
+  getOneRobotPerUnit() {
+    const robots: Block[] = [];
+    for (let i = 0; i < this.units; i++) {
+      robots.push(this);
+    }
+    return robots;
   }
 
   getPotentiel(radius: number) {

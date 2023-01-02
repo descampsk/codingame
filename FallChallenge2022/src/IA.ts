@@ -1,13 +1,12 @@
 /* eslint-disable class-methods-use-this */
 import { Action, MessageAction } from "./Actions";
-import { expensionManager } from "./ExpensionManager";
+import { expensionManager } from "./ExpansionManager";
 import { debug } from "./helpers";
 import { recyclerBuilder } from "./RecyclerBuilder";
 import { robotBuilder } from "./RobotBuilder";
 import { robotManager } from "./RobotManager";
 import {
   blocks,
-  emptyBlocks,
   myBlocks,
   myRobots,
   opponentBlocks,

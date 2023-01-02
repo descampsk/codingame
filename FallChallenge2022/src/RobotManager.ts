@@ -13,55 +13,21 @@ import {
   opponentRobots,
   myMatter,
   opponentStartPosition,
+  myBlocks,
 } from "./State";
 
 export class RobotManager extends ClassLogger {
   public robotsToMove: Block[] = [];
 
-  computeDefensiveMove() {
-    const start = new Date();
-
-    const actions: MoveAction[] = [];
-    // On sort sur les robots qui sont le plus proche de mon départ car ce sont celles à défendre en premier
-    const myRobotsToDef = myRobots
-      .filter(
-        (robot) =>
-          (robot.island?.owner !== Owner.ME || !robot.island?.hasRobot) &&
-          robot.willBecomeGrass > 1 &&
-          robot.neighbors.find((a) => a.owner !== Owner.ME)
-      )
-      .sort(
-        (a, b) =>
-          computeManhattanDistance(a, myStartPosition) -
-          computeManhattanDistance(b, myStartPosition)
-      );
-    for (const myRobot of myRobotsToDef) {
-      for (const opponentRobot of opponentRobots) {
-        if (
-          side * (opponentRobot.x - myRobot.x) === 1 &&
-          myRobot.y === opponentRobot.y &&
-          opponentRobot.units - myRobot.units > 0 &&
-          myMatter >= 10 * opponentRobot.units - myRobot.units
-        ) {
-          this.debug(
-            `DefenseMove of ${opponentRobot.units - myRobot.units} on ${
-              myRobot.x
-            },${myRobot.y}`
-          );
-          myRobot.hasMoved = true;
-        }
-      }
-    }
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`computeDefensiveMove time: ${end}ms`);
-    return actions;
-  }
-
   naiveMethod() {
     const start = new Date();
     const actions: Action[] = [];
 
-    for (const robot of this.robotsToMove.filter((robot) => !robot.hasMoved)) {
+    const robotsToMove = myBlocks
+      .filter((block) => block.units > 0)
+      .flatMap((robot) => robot.getOneRobotPerUnit());
+
+    for (const robot of robotsToMove.filter((robot) => !robot.hasMoved)) {
       const nearestEmptyBlocks = robot.neighbors
         .filter((block) => {
           const { willBecomeGrass } = block;
@@ -119,8 +85,7 @@ export class RobotManager extends ClassLogger {
   }
 
   action() {
-    this.robotsToMove = Array.from(myRobots);
-    const actions = [...this.naiveMethod()];
+    const actions = this.naiveMethod();
     return actions;
   }
 }

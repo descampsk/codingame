@@ -1,4 +1,4 @@
-import { expensionManager } from "./ExpensionManager";
+import { expensionManager } from "./ExpansionManager";
 import { debug, debugTime } from "./helpers";
 import { ia } from "./IA";
 import { readInputs, readMapInput, refresh } from "./State";

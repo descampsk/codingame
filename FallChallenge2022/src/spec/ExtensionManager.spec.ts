@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { ExtensionManager } from "../ExpensionManager";
+import { ExpansionManager } from "../ExpansionManager";
 import { readTestFile } from "../helpers";
 import {
   computeData,
@@ -90,7 +90,7 @@ describe("ExtensionManager", () => {
         expectedSeparation: number[][];
       }) => {
         prepareMap(fileName);
-        const extensionManager = new ExtensionManager();
+        const extensionManager = new ExpansionManager();
         extensionManager.computeSeparation();
         expect(
           extensionManager.separation.map((block) => [block.x, block.y])
