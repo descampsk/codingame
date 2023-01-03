@@ -2,11 +2,12 @@ import { debug } from "./helpers";
 
 /* eslint-disable class-methods-use-this */
 export const SHOULD_DEBUG: Record<string, boolean> = {
-  DefenseManager: true,
-  RecyclerBuilder: false,
+  DefenseManager: false,
+  RecyclerBuilder: true,
   Island: false,
-  RobotBuilder: true,
-  ExpansionManager: true,
+  RobotBuilder: false,
+  ExpansionManager: false,
+  RobotManager: false,
 };
 
 export abstract class ClassLogger {

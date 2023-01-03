@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 /* eslint-disable no-useless-constructor */
 import { expensionManager } from "./ExpansionManager";
@@ -27,6 +28,10 @@ export class Block {
   public hasMoved = 0;
 
   private potentiel: number | null = null;
+
+  private nearestOpponent: Block | null = null;
+
+  private nearestOpponentDistance = Infinity;
 
   private gains: {
     gains: number;
@@ -173,6 +178,8 @@ export class Block {
     this.potentiel = null;
     this.gains = null;
     this.hasMoved = 0;
+    this.nearestOpponent = null;
+    this.nearestOpponentDistance = Infinity;
   }
 
   distanceToBlock(block: Block) {
@@ -213,6 +220,43 @@ export class Block {
     return robots;
   }
 
+  findNearestOpponent() {
+    if (this.nearestOpponent)
+      return {
+        nearestOpponent: this.nearestOpponent,
+        nearestOpponentDistance: this.nearestOpponentDistance,
+      };
+    const hasVisited: Set<Block> = new Set();
+    hasVisited.add(this);
+
+    let distance = 0;
+
+    let nextBlocks: Block[] = [this];
+    while (!this.nearestOpponent && nextBlocks.length) {
+      const currentBlocks = Array.from(nextBlocks);
+      nextBlocks = [];
+      while (currentBlocks.length) {
+        const currentBlock = currentBlocks.pop()!;
+        if (currentBlock.owner === Owner.OPPONENT) {
+          this.nearestOpponent = currentBlock;
+          this.nearestOpponentDistance = distance;
+          break;
+        }
+        for (const neighbor of currentBlock.neighbors) {
+          if (!hasVisited.has(neighbor) && neighbor.canMove) {
+            hasVisited.add(neighbor);
+            nextBlocks.push(neighbor);
+          }
+        }
+      }
+      distance += 1;
+    }
+    return {
+      nearestOpponent: this.nearestOpponent,
+      nearestOpponentDistance: this.nearestOpponentDistance,
+    };
+  }
+
   getPotentiel(radius: number) {
     if (this.potentiel) return this.potentiel;
     this.potentiel = 0;
@@ -227,7 +271,7 @@ export class Block {
       while (currentBlocks.length) {
         const currentBlock = currentBlocks.pop()!;
         if (currentBlock.owner === Owner.OPPONENT)
-          this.potentiel += 2 / distance;
+          this.potentiel += 3 / distance;
         else if (currentBlock.owner === Owner.NONE)
           this.potentiel += 1 / distance;
         for (const neighbor of currentBlock.neighbors) {

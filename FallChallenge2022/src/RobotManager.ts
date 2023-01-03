@@ -6,12 +6,9 @@ import { Block } from "./Block";
 import { ClassLogger } from "./ClassLogger";
 import { computeManhattanDistance, debug, debugTime } from "./helpers";
 import {
-  myRobots,
   Owner,
   side,
   myStartPosition,
-  opponentRobots,
-  myMatter,
   opponentStartPosition,
   myBlocks,
 } from "./State";
@@ -51,6 +48,11 @@ export class RobotManager extends ClassLogger {
           const isNearerOfMyStartB =
             distanceToMyStartB <= distanceToOpponentStartB;
 
+          const nearestOpponentADistance =
+            a.findNearestOpponent().nearestOpponentDistance;
+          const nearestOpponentBDistance =
+            b.findNearestOpponent().nearestOpponentDistance;
+
           // Ordre de priorité
           // - si case ennemie, on tue les robots en premier si mon robot est plus proche de mon point de départ que celui de l'ennemie
           // - qui a le meilleur potentiel
@@ -66,6 +68,13 @@ export class RobotManager extends ClassLogger {
               (a.owner === Owner.OPPONENT ? a.units : 0)
             );
 
+          if (
+            nearestOpponentADistance !== nearestOpponentBDistance &&
+            nearestOpponentADistance >= 4 &&
+            nearestOpponentBDistance >= 4
+          ) {
+            return nearestOpponentADistance - nearestOpponentBDistance;
+          }
           if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
         });

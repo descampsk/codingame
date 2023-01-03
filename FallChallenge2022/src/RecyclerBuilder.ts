@@ -52,7 +52,7 @@ export class RecyclerBuilder extends ClassLogger {
       .flat()
       .filter(
         (block) =>
-          block.initialOwner === Owner.ME && block.computeGains().gains > 20
+          block.initialOwner === Owner.ME && block.computeGains().gains >= 30
       );
     this.bestRecyclers.sort((a, b) => {
       const { gainsPerGrassCreated: gainsPerGrassCreatedA } = a.computeGains();
