@@ -3,7 +3,7 @@ import { debug } from "./helpers";
 /* eslint-disable class-methods-use-this */
 export const SHOULD_DEBUG: Record<string, boolean> = {
   DefenseManager: false,
-  RecyclerBuilder: true,
+  RecyclerBuilder: false,
   Island: false,
   RobotBuilder: false,
   ExpansionManager: false,

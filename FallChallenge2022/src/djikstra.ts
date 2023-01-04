@@ -4,7 +4,8 @@ import { debug, debugTime } from "./helpers";
 
 export const dijtstraAlgorithm = (
   map: Block[][],
-  startingBlocks: number[][]
+  startingBlocks: number[][],
+  maxTime = 5
 ) => {
   const start = new Date();
 
@@ -44,7 +45,7 @@ export const dijtstraAlgorithm = (
     }
     currentBlock = nextBlocks.length() ? nextBlocks.pop() : null;
     const currentTime = new Date().getTime() - start.getTime();
-    if (currentTime > 5) {
+    if (currentTime > maxTime) {
       debug(
         `dijtstraAlgorithm for ${startingBlocks[0][1]},${startingBlocks[0][0]} was cut because time: ${currentTime}ms higher than 5ms`
       );

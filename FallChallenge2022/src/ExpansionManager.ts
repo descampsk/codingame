@@ -148,7 +148,7 @@ export class ExpansionManager extends ClassLogger {
   computeDjikstraMap() {
     if (this.djikstraMap.size) return;
     for (const block of this.separation) {
-      const djikstra = dijtstraAlgorithm(map, [[block.y, block.x]]);
+      const djikstra = dijtstraAlgorithm(map, [[block.y, block.x]], Infinity);
       this.djikstraMap.set(block, djikstra);
     }
   }

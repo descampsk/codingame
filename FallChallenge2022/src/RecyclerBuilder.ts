@@ -148,7 +148,7 @@ export class RecyclerBuilder extends ClassLogger {
       myMatter >= 10 &&
       turn > 2 &&
       !this.hasBuildLastRound &&
-      (notGrassBlocks.length >= 80 ||
+      (notGrassBlocks.length >= 130 ||
         opponentRecyclers.length > myRecyclers.length ||
         ia.turnsWithSameScore > 10) &&
       (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
@@ -198,6 +198,7 @@ export class RecyclerBuilder extends ClassLogger {
       const recycler = bestRecyclers.pop();
       if (!this.willCreateNewIsland(recycler)) {
         this.hasBuildLastRound = true;
+        ia.turnsWithSameScore = 0;
         actions.push(new BuildAction(recycler));
         break;
       }
