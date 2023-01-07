@@ -247,6 +247,17 @@ export class ExpansionManager extends ClassLogger {
       );
     }
 
+    const minDistanceToMyBlocksMap: Map<Block, number> = new Map();
+    const myBlockBorders = myBlocks.filter((block) =>
+      block.neighbors.find((neighbor) => neighbor.owner === Owner.NONE)
+    );
+    for (const separation of remainingSeparation) {
+      const min = minBy(myBlockBorders, (block) =>
+        this.getDistanceFromBlockToSeparation(block, separation)
+      ).value!;
+      minDistanceToMyBlocksMap.set(separation, min);
+    }
+
     while (robots.length && remainingSeparation.length) {
       let bestDestination = remainingSeparation[0];
       let bestDestinationIndex = 0;
@@ -283,6 +294,14 @@ export class ExpansionManager extends ClassLogger {
       if (minDistance - 5 > maxDistanceFromStartToSeparation - turn) {
         this.debug(
           `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${maxDistanceFromStartToSeparation} - ${turn} + 5 so we prefer to find an other robot.`
+        );
+        continue;
+      }
+      const minDistanceToMyBlocks =
+        minDistanceToMyBlocksMap.get(bestDestination)!;
+      if (minDistance > minDistanceToMyBlocks + 2) {
+        this.debug(
+          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${minDistanceToMyBlocks} so we prefer to find an other robot.`
         );
         continue;
       }

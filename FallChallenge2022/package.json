@@ -12,6 +12,7 @@
   "dependencies": {
     "@mathigon/euclid": "1.1.6",
     "lodash": "4.17.21",
+    "munkres-js": "1.2.2",
     "ts-heapq": "1.0.4"
   },
   "devDependencies": {

@@ -10,11 +10,14 @@ export interface Action {
 }
 
 export class MoveAction implements Action {
+  private fullBlock = true;
+
   constructor(
     public amount: number,
     public origin: Block,
     public destination: Block
   ) {
+    this.fullBlock = this.origin.units === this.amount;
     this.origin.units -= this.amount;
     if (this.origin.owner === this.destination.owner) {
       this.destination.units += this.amount;
@@ -35,7 +38,27 @@ export class MoveAction implements Action {
   }
 
   output() {
-    return `MOVE ${this.amount} ${this.origin.x} ${this.origin.y} ${this.destination.x} ${this.destination.y}`;
+    let actionStr = `MOVE ${this.amount} ${this.origin.x} ${this.origin.y} ${this.destination.x} ${this.destination.y}`;
+    if (
+      this.destination.owner !== Owner.OPPONENT ||
+      this.destination.units !== 0
+    )
+      return actionStr;
+
+    // Fallback move if we move in a opponent neighbor without any unit
+    const { neighbors } = this.origin;
+    const index = neighbors.findIndex((block) =>
+      block.equals(this.destination)
+    );
+    if (index > -1) {
+      const fallBackDestination = neighbors
+        .splice(index, 1)
+        .sort((a, b) => b.getPotentiel(5) - a.getPotentiel(5))[0];
+      if (fallBackDestination) {
+        actionStr += `;MOVE ${this.amount} ${this.origin.x} ${this.origin.y} ${fallBackDestination.x} ${fallBackDestination.y}`;
+      }
+    }
+    return actionStr;
   }
 }
 

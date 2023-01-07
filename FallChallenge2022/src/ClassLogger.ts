@@ -6,7 +6,7 @@ export const SHOULD_DEBUG: Record<string, boolean> = {
   RecyclerBuilder: false,
   Island: false,
   RobotBuilder: false,
-  ExpansionManager: false,
+  ExpansionManager: true,
   RobotManager: false,
 };
 
