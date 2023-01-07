@@ -27,6 +27,7 @@ export class IA {
   turnsWithSameActions = 0;
 
   chooseAction() {
+    recyclerBuilder.computeGrassCreated();
     const defenseActions = defenseManager.computeDefense();
     const recyclerActions = recyclerBuilder.action();
     const moveToSeparationActions = expensionManager.moveAndBuildToSeparation();

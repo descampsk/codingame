@@ -72,13 +72,23 @@ export class RobotBuilder extends ClassLogger {
   computeNormalSpawn() {
     const start = new Date();
     // On spawn que si le block adjacent a au moins un voisin vide ou ennemi
-    const blocksToSpawn = myBlocks.filter(
-      (block) =>
-        block.canSpawn &&
-        (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
-        block.willBecomeGrass > 1 &&
-        block.neighbors.find((a) => a.owner !== Owner.ME)
-    );
+    const possibleBlocks = myBlocks
+      .filter(
+        (block) =>
+          block.canSpawn &&
+          (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
+          block.willBecomeGrass > 1 &&
+          block.neighbors.find((a) => a.owner !== Owner.ME)
+      )
+      .sort((a, b) => side * (b.x - a.x));
+    const blocksToSpawn: Block[] = [];
+    const blockInThisLine: Set<number> = new Set();
+    for (const block of possibleBlocks) {
+      if (!blockInThisLine.has(block.y)) {
+        blocksToSpawn.push(block);
+        blockInThisLine.add(block.y);
+      }
+    }
     this.debug(
       "possibleSpawn",
       blocksToSpawn.length,

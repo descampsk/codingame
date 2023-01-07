@@ -36,9 +36,10 @@ export class DefenseManager extends ClassLogger {
       }
     }
     dangerousRobots.sort((a, b) => {
-      if (a.blockToDefend.units !== b.blockToDefend.units)
-        return a.blockToDefend.units - b.blockToDefend.units;
-      return b.dangerousRobot.units - a.dangerousRobot.units;
+      return (
+        computeManhattanDistance(a.blockToDefend, myStartPosition) -
+        computeManhattanDistance(b.blockToDefend, myStartPosition)
+      );
     });
     this.debug(
       "DangerousRobots",
@@ -51,11 +52,13 @@ export class DefenseManager extends ClassLogger {
   }
 
   private builDefensiveRecycler(dangerousRobot: Block, blockToDefend: Block) {
+    const { gains, grassCreated } = blockToDefend.computeGains();
     if (
       dangerousRobot.units > 1 ||
-      blockToDefend.computeGains().gains > 30 ||
-      [Owner.BOTH || Owner.OPPONENT].includes(blockToDefend.initialOwner) ||
-      opponentRecyclers.length > myRecyclers.length
+      (gains > 20 &&
+        recyclerBuilder.myGrassCreated + grassCreated <=
+          recyclerBuilder.opponentGrassCreated) ||
+      [Owner.BOTH || Owner.OPPONENT].includes(blockToDefend.initialOwner)
     ) {
       this.debug(
         `Building a recycler on ${blockToDefend.x},${blockToDefend.y} to defend`

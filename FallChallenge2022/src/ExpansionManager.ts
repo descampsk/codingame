@@ -239,11 +239,11 @@ export class ExpansionManager extends ClassLogger {
       myStartPosition.distanceToBlock(block)
     ).maxValue!;
 
-    const manhattanDistanceToOpponentStart: Map<Block, number> = new Map();
-    for (const robot of robots) {
-      manhattanDistanceToOpponentStart.set(
-        robot,
-        computeManhattanDistance(robot, opponentStartPosition)
+    const manhattanDistanceToMyStart: Map<Block, number> = new Map();
+    for (const destination of remainingSeparation) {
+      manhattanDistanceToMyStart.set(
+        destination,
+        computeManhattanDistance(destination, myStartPosition)
       );
     }
 
@@ -276,8 +276,8 @@ export class ExpansionManager extends ClassLogger {
           if (
             distance < minDistance ||
             (distance === minDistance &&
-              manhattanDistanceToOpponentStart.get(bestRobot)! <
-                manhattanDistanceToOpponentStart.get(robot)!)
+              manhattanDistanceToMyStart.get(bestDestination)! <
+                manhattanDistanceToMyStart.get(destination)!)
           ) {
             minDistance = distance;
             bestDestination = destination;

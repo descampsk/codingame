@@ -33,7 +33,7 @@ export class RobotManager extends ClassLogger {
         })
         .sort((a, b) => {
           const potentielRadius =
-            robot.island?.owner === Owner.ME ? Infinity : 5;
+            robot.island?.owner === Owner.ME ? Infinity : 4;
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
 
@@ -70,8 +70,8 @@ export class RobotManager extends ClassLogger {
 
           if (
             nearestOpponentADistance !== nearestOpponentBDistance &&
-            nearestOpponentADistance >= 4 &&
-            nearestOpponentBDistance >= 4
+            nearestOpponentADistance >= 3 &&
+            nearestOpponentBDistance >= 3
           ) {
             return nearestOpponentADistance - nearestOpponentBDistance;
           }

@@ -21,11 +21,16 @@ import {
 } from "./State";
 import { ia } from "./IA";
 import { ClassLogger } from "./ClassLogger";
+import { expensionManager } from "./ExpansionManager";
 
 export class RecyclerBuilder extends ClassLogger {
   public hasBuildLastRound = false;
 
   public bestRecyclers: Block[] = [];
+
+  opponentGrassCreated = 0;
+
+  myGrassCreated = 0;
 
   computeIncomes() {
     let myIncome = 0;
@@ -43,6 +48,25 @@ export class RecyclerBuilder extends ClassLogger {
       myIncome,
       opponentIncome,
     };
+  }
+
+  computeGrassCreated() {
+    this.opponentGrassCreated = 0;
+    this.myGrassCreated = 0;
+    for (let i = 0; i < map.length; i++) {
+      for (let j = 0; j < map[0].length; j++) {
+        const block = map[i][j];
+        if (block.scrapAmount === 0 || block.willBecomeGrass < Infinity) {
+          const { owner } = expensionManager.mapOwner[i][j];
+          if (owner === Owner.OPPONENT) {
+            this.opponentGrassCreated += 1;
+          }
+          if (owner === Owner.ME) {
+            this.myGrassCreated += 1;
+          }
+        }
+      }
+    }
   }
 
   findBestRecyclers(map: Block[][]) {
@@ -97,6 +121,7 @@ export class RecyclerBuilder extends ClassLogger {
     for (const island of newIslands) {
       if (
         island.owner === Owner.NONE &&
+        island.blocks[0].initialOwner === Owner.ME &&
         !islands.find(
           (i) => i.blocks[0].equals(island.blocks[0]) && i.size === island.size
         )
@@ -207,73 +232,9 @@ export class RecyclerBuilder extends ClassLogger {
     return actions;
   }
 
-  buildDefensive() {
-    const start = new Date();
-
-    const actions: Action[] = [];
-    const possibleRecyclers = myBlocks
-      .filter((block) => block.canBuild)
-      .sort(
-        (a, b) =>
-          computeManhattanDistance(a, myStartPosition) -
-          computeManhattanDistance(b, myStartPosition)
-      );
-    for (const block of possibleRecyclers) {
-      for (const robot of opponentRobots) {
-        if (
-          side * (robot.x - block.x) === 1 &&
-          robot.y === block.y &&
-          myMatter >= 10
-        ) {
-          if (
-            robot.units > 1 ||
-            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner) ||
-            opponentRecyclers.length > myRecyclers.length
-          )
-            actions.push(new BuildAction(block));
-          else if (myMatter < 20) this.hasBuildLastRound = true;
-          break;
-        }
-      }
-    }
-    // Because we already created some recyclers we need to remove new recyclers.
-    const newPossiblesRecyclers = possibleRecyclers.filter(
-      (block) => block.canBuild
-    );
-    for (const block of newPossiblesRecyclers) {
-      for (const robot of opponentRobots) {
-        if (
-          Math.abs(robot.y - block.y) === 1 &&
-          robot.x === block.x &&
-          myMatter >= 10
-        ) {
-          if (
-            robot.units > 1 ||
-            [Owner.BOTH || Owner.OPPONENT].includes(block.initialOwner)
-          )
-            actions.push(new BuildAction(block));
-          else this.hasBuildLastRound = true;
-          break;
-        }
-      }
-    }
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) debug("buildDefensive time: %dms", end);
-    return actions;
-  }
-
   action() {
     this.findBestRecyclers(map);
-
     const start = new Date();
-    // const defensiveActions = this.buildDefensive();
-    // if (defensiveActions.length) {
-    //   this.debug("defensiveBuild: ", defensiveActions.length);
-    //   const end = new Date().getTime() - start.getTime();
-    //   if (debugTime) this.debug(`action time: ${end} ms`);
-    //   return defensiveActions;
-    // }
-
     if (this.shouldBuildNaiveRecycler()) {
       const actions = this.buildNaiveRecycler();
       const end = new Date().getTime() - start.getTime();

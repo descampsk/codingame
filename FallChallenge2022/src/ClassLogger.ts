@@ -7,7 +7,7 @@ export const SHOULD_DEBUG: Record<string, boolean> = {
   Island: false,
   RobotBuilder: false,
   ExpansionManager: true,
-  RobotManager: false,
+  RobotManager: true,
 };
 
 export abstract class ClassLogger {
