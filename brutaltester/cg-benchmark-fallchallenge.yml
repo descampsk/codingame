@@ -1,0 +1,66 @@
+---
+# Account configuration
+accountConfigurationList:
+    # rememberMe ID, extracted from your browser's cookies (more info below)
+  - rememberMe: 3629685260ed3a0a2ce6fa5736f2a855737952f
+    # account ID, extracted from your CG profile's URL
+    accountId: b73dd7ad2298cfe9678bb2483dfc9d505869263
+
+# If enabled, seed list will be ignored and every match will be played against a random seed
+randomSeed: false
+
+# The name of the multiplayer game as it appears at the end of the url of your IDE
+multiName: keep-off-the-grass-fall-challenge-2022
+
+# Optional. Indicates if the game is a contest or not. FALSE if not provided
+isContest: false
+
+# List of seeds to play
+seedList:
+- seed=5811310193380887000
+- seed=1760124009568808200
+- seed=8144915597461379000
+- seed=3119142228772913700
+- seed=3610762653499834000
+- seed=3933286301484787700
+
+# [0, N] forced start position at N
+# -1 : Each seed is played with every starting positions configuration. (Works only with fixed seed list).
+#       In 1v1, it will generate 2 games, 6 games in 1v2 and 24 games in 1v3. Best suited for non symmetrical and/or turn-based games.
+# -2 : Each seed is played once, with random starting positions. Best suited for perfectly symmetrical
+#       and non turn-based games in which starting position doesn't really matter, like MM, GoD, CotC, GitC, ...
+playerPosition: -2
+
+# Minimum number of enemies to play against
+minEnemiesNumber: 1
+
+# Maximum number of enemies to play against
+maxEnemiesNumber: 1
+
+# Optional. Cooldown between every game. If not provided, applying the lowest one first and adjusting it as long as CGBenchmark hits the servers' limitations.
+# requestCooldown: 45 # 80 games on 1h
+# requestCooldown: 72 # 150 games on 3h
+# requestCooldown: 108 # 200 games on 6h
+# requestCooldown: 144 # 600 games on 24h
+
+# List of tested codes
+codeConfigurationList:
+- sourcePath: C:/Programmation/codingame/FallChallenge2022/dist/index.js
+- sourcePath: C:/Programmation/codingame/FallChallenge2022/saved/last.js
+
+# -- The following values are the default ones that are used if not defined in the codeConfigurationList
+
+# Default value for nbReplays
+defaultNbReplays: 6
+
+# Default value for language
+defaultLanguage: Javascript
+
+# Default value for enemies
+defaultEnemies:
+  - agentId: '4687369'
+    name: bregneau
+  - agentId: '4681576'
+    name: HMMD
+  - agentId: '4681842'
+    name: But_Why

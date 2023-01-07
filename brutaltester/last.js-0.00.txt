@@ -1,0 +1,22 @@
+Testing C:/Programmation/codingame/FallChallenge2022/saved/last.js against  bregneau_4687369 HMMD_4681576 But_Why_4681842
+Start : Sat Jan 07 10:52:22 CET 2023
+End : Sat Jan 07 10:55:05 CET 2023
+
+            bregneau    GW=0,00%   [0,00%  ,97,50% ] [W=0,00%   L=100,00% D=0,00%  ] [1]
+                HMMD    GW=0,00%   [0,00%  ,70,76% ] [W=0,00%   L=100,00% D=0,00%  ] [3]
+             But_Why    GW=0,00%   [0,00%  ,84,19% ] [W=0,00%   L=100,00% D=0,00%  ] [2]
+      -- EVERYONE --    GW=0,00%   [0,00%  ,45,93% ] [W=0,00%   L=100,00% D=0,00%  ] [6 games]
+
+
+[    Apofils ][   SEED 0 ] https://www.codingame.com/replay/689520024 1:bregneau 2:[ME]
+[    Apofils ][   SEED 1 ] https://www.codingame.com/replay/689520074 1:But_Why 2:[ME]
+[    Apofils ][   SEED 2 ] https://www.codingame.com/replay/689520144 1:HMMD 2:[ME]
+[    Apofils ][   SEED 3 ] https://www.codingame.com/replay/689520212 1:But_Why 2:[ME]
+[    Apofils ][   SEED 4 ] https://www.codingame.com/replay/689520266 1:HMMD 2:[ME]
+[    Apofils ][   SEED 5 ] https://www.codingame.com/replay/689520318 1:HMMD 2:[ME]
+Temporary results :
+            bregneau    GW=0,00%   [0,00%  ,97,50% ] [W=0,00%   L=100,00% D=0,00%  ] [1]
+                HMMD    GW=0,00%   [0,00%  ,70,76% ] [W=0,00%   L=100,00% D=0,00%  ] [3]
+             But_Why    GW=0,00%   [0,00%  ,84,19% ] [W=0,00%   L=100,00% D=0,00%  ] [2]
+      -- EVERYONE --    GW=0,00%   [0,00%  ,45,93% ] [W=0,00%   L=100,00% D=0,00%  ] [6 games]
+
