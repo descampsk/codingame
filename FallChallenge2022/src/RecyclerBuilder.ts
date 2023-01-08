@@ -56,7 +56,11 @@ export class RecyclerBuilder extends ClassLogger {
     for (let i = 0; i < map.length; i++) {
       for (let j = 0; j < map[0].length; j++) {
         const block = map[i][j];
-        if (block.scrapAmount === 0 || block.willBecomeGrass < Infinity) {
+        if (
+          block.recycler ||
+          block.scrapAmount === 0 ||
+          block.willBecomeGrass < Infinity
+        ) {
           const { owner } = expensionManager.mapOwner[i][j];
           if (owner === Owner.OPPONENT) {
             this.opponentGrassCreated += 1;
@@ -76,21 +80,23 @@ export class RecyclerBuilder extends ClassLogger {
       .flat()
       .filter(
         (block) =>
-          block.initialOwner === Owner.ME && block.computeGains().gains >= 30
+          block.initialOwner === Owner.ME &&
+          block.computeGains().gains > 20 &&
+          block.distanceToSeparation <= myStartPosition.distanceToSeparation
       );
     this.bestRecyclers.sort((a, b) => {
       const { gainsPerGrassCreated: gainsPerGrassCreatedA } = a.computeGains();
       const { gainsPerGrassCreated: gainsPerGrassCreatedB } = b.computeGains();
       return gainsPerGrassCreatedB - gainsPerGrassCreatedA;
     });
-    // this.debug(
-    //   "BestRecyclers",
-    //   this.bestRecyclers.map((block) => [
-    //     block.x,
-    //     block.y,
-    //     block.computeGains(),
-    //   ])
-    // );
+    this.debug(
+      "BestRecyclers",
+      this.bestRecyclers.map((block) => [
+        block.x,
+        block.y,
+        block.computeGains(),
+      ])
+    );
   }
 
   willCreateNewIsland(block: Block) {
@@ -201,7 +207,7 @@ export class RecyclerBuilder extends ClassLogger {
         block.canBuild &&
         block.neighbors.find((neighbor) => neighbor.owner === Owner.OPPONENT)
     );
-    if (myBlockBorders.length * 10 > myMatter) {
+    if (myBlockBorders.length * 10 > myMatter && myBlockBorders.length > 3) {
       this.debug("We don't have enough matters to build win recyclers");
       return [];
     }
@@ -251,6 +257,10 @@ export class RecyclerBuilder extends ClassLogger {
           blocks: island.blocks.map((block) => `${block.x},${block.y}`),
         }))
       );
+      if (myBlockBorders.length * 10 > myMatter) {
+        this.debug("We don't have enough matters to build win recyclers");
+        return [];
+      }
       this.hasBuildLastRound = true;
       return myBlockBorders.map((block) => new BuildAction(block));
     }
@@ -294,6 +304,11 @@ export class RecyclerBuilder extends ClassLogger {
     for (const recycler of possibleRecyclers) {
       bestRecyclers.push(recycler);
     }
+
+    this.debug(
+      "BestRecyclers found",
+      bestRecyclers.heap.map((block) => [block.x, block.y])
+    );
 
     while (bestRecyclers.length()) {
       const recycler = bestRecyclers.pop();

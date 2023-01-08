@@ -79,28 +79,14 @@ export class Block {
   }
 
   public get willBecomeGrass(): number {
-    let totalRecycler = 0;
-    const { x, y } = this;
-    for (let i = -1; i <= 1; i++) {
-      for (let j = -1; j <= 1; j++) {
-        if (
-          x + j >= 0 &&
-          y + i >= 0 &&
-          x + j < width &&
-          y + i < height &&
-          Math.abs(i) !== Math.abs(j)
-        ) {
-          const block = map[y + i][x + j];
-          if (block.recycler) {
-            totalRecycler += 1;
-          }
-        }
+    const { neighborsWithRecycler } = this;
+    let grassInXTurn = Infinity;
+    for (const neighbor of neighborsWithRecycler) {
+      if (neighbor.recycler && this.scrapAmount <= neighbor.scrapAmount) {
+        if (this.scrapAmount < grassInXTurn) grassInXTurn = this.scrapAmount;
       }
     }
-
-    return totalRecycler === 0
-      ? Infinity
-      : Math.ceil(this.scrapAmount / totalRecycler);
+    return grassInXTurn;
   }
 
   public get isDangerousRobotOpponent(): boolean {
@@ -200,6 +186,14 @@ export class Block {
     const { separation } = expensionManager;
     const distance = minBy(separation, (block) =>
       this.distanceToBlock(block)
+    ).value;
+    return distance !== null ? distance : Infinity;
+  }
+
+  public get manathanDistanceToSeparation() {
+    const { separation } = expensionManager;
+    const distance = minBy(separation, (block) =>
+      computeManhattanDistance(block, this)
     ).value;
     return distance !== null ? distance : Infinity;
   }

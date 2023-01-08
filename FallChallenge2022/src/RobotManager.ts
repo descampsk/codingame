@@ -99,6 +99,15 @@ export class RobotManager extends ClassLogger {
           return side * (b.x - a.x);
         });
 
+      this.debug(
+        `Robot ${robot.x},${robot.y} neighors potentiel`,
+        nearestEmptyBlocks.map((block) => [
+          block.x,
+          block.y,
+          block.getPotentiel(5),
+        ])
+      );
+
       const nearestEmptyBlock = nearestEmptyBlocks[0];
 
       if (nearestEmptyBlock) {
