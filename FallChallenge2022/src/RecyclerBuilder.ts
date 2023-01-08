@@ -83,14 +83,14 @@ export class RecyclerBuilder extends ClassLogger {
       const { gainsPerGrassCreated: gainsPerGrassCreatedB } = b.computeGains();
       return gainsPerGrassCreatedB - gainsPerGrassCreatedA;
     });
-    this.debug(
-      "BestRecyclers",
-      this.bestRecyclers.map((block) => [
-        block.x,
-        block.y,
-        block.computeGains(),
-      ])
-    );
+    // this.debug(
+    //   "BestRecyclers",
+    //   this.bestRecyclers.map((block) => [
+    //     block.x,
+    //     block.y,
+    //     block.computeGains(),
+    //   ])
+    // );
   }
 
   willCreateNewIsland(block: Block) {
@@ -122,6 +122,7 @@ export class RecyclerBuilder extends ClassLogger {
       if (
         island.owner === Owner.NONE &&
         island.blocks[0].initialOwner === Owner.ME &&
+        island.size > 1 &&
         !islands.find(
           (i) => i.blocks[0].equals(island.blocks[0]) && i.size === island.size
         )
@@ -171,16 +172,18 @@ export class RecyclerBuilder extends ClassLogger {
     const notGrassBlocks = blocks.filter((block) => !block.isGrass);
     const should =
       myMatter >= 10 &&
-      turn > 2 &&
-      !this.hasBuildLastRound &&
-      (notGrassBlocks.length >= 130 ||
+      (!this.hasBuildLastRound ||
+        this.myGrassCreated + 3 < this.opponentGrassCreated) &&
+      (notGrassBlocks.length >= 100 ||
         opponentRecyclers.length > myRecyclers.length ||
-        ia.turnsWithSameScore > 10) &&
-      (myRobots.length < 10 || myRobots.length <= opponentRobots.length + 5) &&
+        ia.turnsWithSameScore > 10 ||
+        !!myBlocks.find((block) => block.initialOwner === Owner.OPPONENT)) &&
       // Lost 100 seats in the Leaderboard if I remove this condition
       myMatter < 40;
     this.debug("shouldBuildNaiveRecycler", should, {
       turn,
+      myGrassCreated: this.myGrassCreated,
+      opponentGrassCreated: this.opponentGrassCreated,
       hasBuildLastRound: this.hasBuildLastRound,
       notGrassBlocks: notGrassBlocks.length,
       opponentRecyclers: opponentRecyclers.length,
@@ -192,27 +195,100 @@ export class RecyclerBuilder extends ClassLogger {
     return should;
   }
 
-  buildNaiveRecycler() {
-    const actions: BuildAction[] = [];
-    const possibleRecyclers = myBlocks.filter(
+  buildWinRecycler() {
+    const myBlockBorders = myBlocks.filter(
       (block) =>
         block.canBuild &&
-        (block.computeGains().gains > 20 ||
-          [Owner.BOTH, Owner.OPPONENT].includes(block.initialOwner)) &&
+        block.neighbors.find((neighbor) => neighbor.owner === Owner.OPPONENT)
+    );
+    if (myBlockBorders.length * 10 > myMatter) {
+      this.debug("We don't have enough matters to build win recyclers");
+      return [];
+    }
+
+    const copyMap = Block.createCopyOfMap(map);
+    for (const block of myBlockBorders) {
+      copyMap[block.y][block.x].recycler = true;
+    }
+
+    const flapMap = copyMap.flat();
+    flapMap.forEach((block) => block.updateNeighbors(copyMap));
+    const newIslands = Island.findIslands(copyMap);
+    let myScore = 0;
+    let opponentScore = 0;
+    for (const island of newIslands) {
+      if (island.owner === Owner.BOTH) {
+        this.debug(
+          "An island is contested. Then no win recycler is possible",
+          myBlockBorders.map((block) => [block.x, block.y])
+        );
+        return [];
+      }
+      if (island.owner === Owner.ME) {
+        for (const block of island.blocks) {
+          if (block.scrapAmount > 0 && block.willBecomeGrass === Infinity)
+            myScore += 1;
+        }
+      }
+      if (island.owner === Owner.OPPONENT) {
+        for (const block of island.blocks) {
+          if (block.scrapAmount > 0 && block.willBecomeGrass === Infinity)
+            opponentScore += 1;
+        }
+      }
+    }
+
+    if (myScore >= opponentScore) {
+      this.debug(
+        "A win recycler has been found",
+        myBlockBorders.map((block) => [block.x, block.y]),
+        myScore,
+        opponentScore,
+        newIslands.map((island) => ({
+          owner: island.owner,
+          origin: [island.blocks[0].x, island.blocks[0].y],
+          size: island.size,
+          blocks: island.blocks.map((block) => `${block.x},${block.y}`),
+        }))
+      );
+      this.hasBuildLastRound = true;
+      return myBlockBorders.map((block) => new BuildAction(block));
+    }
+    this.debug(
+      "A lose recycler has been found. So we won't build it",
+      myScore,
+      opponentScore,
+      myBlockBorders.map((block) => [block.x, block.y])
+    );
+    return [];
+  }
+
+  buildNaiveRecycler() {
+    const actions: BuildAction[] = [];
+
+    const possibleBlocksOnMySide = myBlocks.filter(
+      (block) =>
+        block.canBuild &&
+        block.initialOwner === Owner.ME &&
+        (turn < 5 ||
+          this.myGrassCreated + block.computeGains().grassCreated + 1 <
+            this.opponentGrassCreated) &&
+        block.computeGains().gains > 20 &&
+        block.computeGains().gainsPerTurn >= 3 &&
         (block.island?.owner !== Owner.ME || ia.turnsWithSameScore > 10)
     );
+    const possibleBlocksOnOpponentSide = myBlocks.filter(
+      (block) =>
+        block.canBuild &&
+        [Owner.BOTH, Owner.OPPONENT].includes(block.initialOwner)
+    );
+    const possibleRecyclers = [
+      ...possibleBlocksOnMySide,
+      ...possibleBlocksOnOpponentSide,
+    ];
     const bestRecyclers: Heapq<Block> = new Heapq<Block>([], (a, b) => {
       const { gainsPerGrassCreated: gainsPerGrassCreatedA } = a.computeGains();
       const { gainsPerGrassCreated: gainsPerGrassCreatedB } = b.computeGains();
-      const aIsSeparation = a.isOnSeparation;
-      const bIsSeparation = b.isOnSeparation;
-      if (aIsSeparation && !bIsSeparation) return true;
-      if (bIsSeparation && !aIsSeparation) return false;
-      if (a.initialOwner !== b.initialOwner) {
-        if (a.initialOwner === Owner.OPPONENT) return true;
-        if (b.initialOwner === Owner.OPPONENT) return false;
-      }
-
       return gainsPerGrassCreatedB < gainsPerGrassCreatedA;
     });
     for (const recycler of possibleRecyclers) {

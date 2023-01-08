@@ -10,14 +10,25 @@ export interface Action {
 }
 
 export class MoveAction implements Action {
-  private fullBlock = true;
-
   constructor(
     public amount: number,
     public origin: Block,
     public destination: Block
   ) {
-    this.fullBlock = this.origin.units === this.amount;
+    const { neighbors } = origin;
+    if (!neighbors.find((block) => block.equals(destination))) {
+      const distance = destination.distanceToBlock(origin);
+      const newDestination = neighbors
+        .filter(
+          (neighbor) => destination.distanceToBlock(neighbor) === distance - 1
+        )
+        .sort(
+          (a, b) =>
+            Math.abs(destination.y - a.y) - Math.abs(destination.y - b.y)
+        )[0];
+      if (newDestination) this.destination = newDestination;
+    }
+
     this.origin.units -= this.amount;
     if (this.origin.owner === this.destination.owner) {
       this.destination.units += this.amount;
@@ -25,6 +36,9 @@ export class MoveAction implements Action {
     }
     if (this.destination.owner === Owner.NONE) {
       this.destination.units += this.amount;
+    }
+    if (this.destination.owner === Owner.ME) {
+      this.destination.canBuild = false;
     }
   }
 
@@ -51,9 +65,11 @@ export class MoveAction implements Action {
       block.equals(this.destination)
     );
     if (index > -1) {
-      const fallBackDestination = neighbors
-        .splice(index, 1)
-        .sort((a, b) => b.getPotentiel(5) - a.getPotentiel(5))[0];
+      const fallBackDestinations = neighbors.slice(0);
+      fallBackDestinations.splice(index, 1);
+      const fallBackDestination = fallBackDestinations.sort(
+        (a, b) => b.getPotentiel(5) - a.getPotentiel(5)
+      )[0];
       if (fallBackDestination) {
         actionStr += `;MOVE ${this.amount} ${this.origin.x} ${this.origin.y} ${fallBackDestination.x} ${fallBackDestination.y}`;
       }

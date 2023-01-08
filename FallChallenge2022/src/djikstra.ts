@@ -5,7 +5,7 @@ import { debug, debugTime } from "./helpers";
 export const dijtstraAlgorithm = (
   map: Block[][],
   startingBlocks: number[][],
-  maxTime = 5
+  maxTime = 8
 ) => {
   const start = new Date();
 

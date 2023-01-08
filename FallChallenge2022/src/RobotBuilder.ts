@@ -169,7 +169,13 @@ export class RobotBuilder extends ClassLogger {
       return side * (b.x - a.x);
     });
     const end = new Date().getTime() - start.getTime();
+    // const nearOpponentBlockToSpawn = blocksToSpawn.filter(
+    //   (block) => sortingCriteria.get(block)!.minToOpponent < 4
+    // );
     if (debugTime) this.debug(`computeNormalSpawn time: ${end} ms`);
+    // return nearOpponentBlockToSpawn.length
+    //   ? nearOpponentBlockToSpawn.slice(0, 3)
+    //   : blocksToSpawn.slice(0, 3);
     return blocksToSpawn.slice(0, 3);
   }
 

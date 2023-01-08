@@ -205,8 +205,9 @@ export const refresh = () => {
   //   debug("WillBcomeGrass", map[3][6].willBecomeGrass);
   //   debug("Block:", map[6][2].getPotentiel(5));
   //   debug("Block:", map[6][1].getPotentiel(5));
-  // debug("Block:", map[0][4].getPotentiel(4));
-  // debug("Block:", map[2][4].getPotentiel(4));
+
+  // debug("Block:", map[2][10].getPotentiel(5));
+  // debug("Block:", map[1][11].getPotentiel(5));
   //   debug("Island:", islands.length);
   //   debug("Block:", map[4][4].neighbors);
   //   debug("Island:", map[1][6].neighbors);

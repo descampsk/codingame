@@ -36,14 +36,18 @@ export class Island extends ClassLogger {
   static createIsland(start: Block) {
     const island = new Island();
     const nextBlocks = [start];
+    // eslint-disable-next-line no-param-reassign
+    start.island = island;
     while (nextBlocks.length) {
       const nextBlock = nextBlocks.pop()!;
       island.blocks.push(nextBlock);
-      nextBlock.island = island;
       const neighbors = nextBlock.neighbors.filter(
         (neighbor) => !neighbor.island
       );
-      if (neighbors.length) nextBlocks.push(...neighbors);
+      for (const neighbor of neighbors) {
+        neighbor.island = island;
+        nextBlocks.push(neighbor);
+      }
     }
     return island;
   }

@@ -1,11 +1,14 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+// @ts-expect-error NO types
+import munkres from "munkres-js";
 import { Action, MoveAction, SpawnAction } from "./Actions";
 import { Block } from "./Block";
 import { ClassLogger } from "./ClassLogger";
 import { dijtstraAlgorithm } from "./djikstra";
 import { computeManhattanDistance, debugTime, maxBy, minBy } from "./helpers";
 import {
+  blocks,
   map,
   myBlocks,
   myMatter,
@@ -13,8 +16,10 @@ import {
   myStartPosition,
   opponentStartPosition,
   Owner,
+  side,
   turn,
 } from "./State";
+import { recyclerBuilder } from "./RecyclerBuilder";
 
 export class ExpansionManager extends ClassLogger {
   public separation: Block[] = [];
@@ -22,6 +27,8 @@ export class ExpansionManager extends ClassLogger {
   public djikstraMap: Map<Block, number[][]> = new Map();
 
   public mapOwner: { value: number; owner: Owner }[][] = [];
+
+  public isExpansionDone = false;
 
   computeSeparation() {
     if (this.separation.length) return;
@@ -163,7 +170,10 @@ export class ExpansionManager extends ClassLogger {
     const remainingSeparation = this.separation.filter(
       (block) =>
         // units = 0 because an other unit could move there to defend and update the block units
-        block.owner === Owner.NONE && block.canMove && block.units === 0
+        block.owner === Owner.NONE &&
+        block.canMove &&
+        block.units === 0 &&
+        block.island?.owner === Owner.BOTH
     );
     // .sort(
     //   (a, b) =>
@@ -174,8 +184,12 @@ export class ExpansionManager extends ClassLogger {
       "RemainingSeparation",
       remainingSeparation.map((block) => [block.x, block.y])
     );
+    if (this.isExpansionDone || !remainingSeparation.length) {
+      this.isExpansionDone = true;
+      return actions;
+    }
     actions.push(
-      ...this.moveToSeparation(remainingSeparation),
+      ...this.moveToSeparationV2(remainingSeparation),
       ...this.buildToSeparation(remainingSeparation)
     );
     const end = new Date().getTime() - start.getTime();
@@ -186,6 +200,14 @@ export class ExpansionManager extends ClassLogger {
   buildToSeparation(remainingSeparation: Block[]) {
     const start = new Date();
     const actions: Action[] = [];
+
+    this.debug(
+      "RemainingSeparationAfterMove",
+      remainingSeparation.map((block) => [block.x, block.y])
+    );
+
+    const minMatters = recyclerBuilder.hasBuildLastRound ? 10 : 20;
+
     // On va créer des robots pour les destinations manquantes
     if (remainingSeparation.length) {
       const blocksToSpawn = myBlocks.filter(
@@ -195,7 +217,7 @@ export class ExpansionManager extends ClassLogger {
           block.willBecomeGrass > 1 &&
           block.neighbors.find((a) => a.owner !== Owner.ME)
       );
-      while (remainingSeparation.length && myMatter >= 10) {
+      while (remainingSeparation.length && myMatter >= minMatters) {
         let bestDestination = remainingSeparation[0];
         let bestDestinationIndex = 0;
         let minDistance = Infinity;
@@ -215,6 +237,15 @@ export class ExpansionManager extends ClassLogger {
               bestDestinationIndex = indexDestination;
               bestBlockToSpawn = block;
             }
+            if (
+              distance === minDistance &&
+              side * (block.x - bestBlockToSpawn.x) < 0
+            ) {
+              minDistance = distance;
+              bestDestination = destination;
+              bestDestinationIndex = indexDestination;
+              bestBlockToSpawn = block;
+            }
           }
         }
         this.debug(
@@ -226,6 +257,98 @@ export class ExpansionManager extends ClassLogger {
     }
     const end = new Date().getTime() - start.getTime();
     if (debugTime) this.debug(`buildToSeparation time: ${end}ms`);
+    return actions;
+  }
+
+  moveToSeparationV2(remainingSeparation: Block[]) {
+    const start = new Date();
+    const actions: Action[] = [];
+    const robots = myBlocks
+      .filter(
+        (block) =>
+          block.units > 0 &&
+          block.hasMoved < block.units &&
+          block.distanceToSeparation > 0
+      )
+      .flatMap((robot) => robot.getOneRobotPerUnit())
+      .filter((robot) => {
+        const { nearestOpponentDistance } = robot.findNearestOpponent();
+        const { distanceToSeparation } = robot;
+        return distanceToSeparation < nearestOpponentDistance;
+      });
+
+    this.debug(
+      "AvailableRobots",
+      robots.map((robot) => [robot.x, robot.y])
+    );
+
+    if (!remainingSeparation.length || !robots.length) {
+      return actions;
+    }
+
+    const distanceFromSeparationToRobot: number[][] = [];
+    for (const [indexSeparation, separation] of remainingSeparation.entries()) {
+      const row = [];
+      for (const robot of robots) {
+        const distance = this.getDistanceFromBlockToSeparation(
+          robot,
+          separation
+        );
+        const neighborsNone = robot.neighbors.filter(
+          (block) =>
+            block.owner === Owner.NONE &&
+            this.getDistanceFromBlockToSeparation(block, separation) ===
+              distance - 1
+        );
+        const neighborsMe = robot.neighbors.filter(
+          (block) =>
+            block.owner === Owner.ME &&
+            this.getDistanceFromBlockToSeparation(block, separation) ===
+              distance - 1
+        );
+        if (!neighborsNone.length && neighborsMe.length) row.push(distance + 1);
+        else if (
+          indexSeparation === 0 ||
+          indexSeparation === remainingSeparation.length - 1
+        )
+          row.push(distance - 1.1);
+        else if (robot.distanceToSeparation === distance)
+          row.push(distance - 0.1);
+        else row.push(distance);
+      }
+      distanceFromSeparationToRobot.push(row);
+    }
+    this.debug("distanceFromSeparationToRobot", distanceFromSeparationToRobot);
+    const bestRobotsForDestination = munkres(
+      distanceFromSeparationToRobot
+    ) as number[][];
+    this.debug("bestRobotsForDestination", bestRobotsForDestination);
+    const originalDestination = remainingSeparation.slice(0);
+    for (let i = 0; i < bestRobotsForDestination.length; i++) {
+      const [destinationIndex, robotIndex] = bestRobotsForDestination[i];
+      const destination = originalDestination[destinationIndex];
+      const indexToDelete = remainingSeparation.findIndex((block) =>
+        block.equals(destination)
+      );
+      remainingSeparation.splice(indexToDelete, 1);
+      const robot = robots[robotIndex];
+      const distance =
+        distanceFromSeparationToRobot[destinationIndex][robotIndex];
+      const { nearestOpponentDistance } = robot.findNearestOpponent();
+      if (nearestOpponentDistance + 2 < distance) {
+        this.debug(
+          `Robot ${robot.x},${robot.y} wont go to ${destination.x},${destination.y} with a distance of ${distance} because it higher than ${nearestOpponentDistance} + 2`
+        );
+      } else {
+        this.debug(
+          `Robot ${robot.x},${robot.y} should go to ${destination.x},${destination.y} with a distance of ${distance}`
+        );
+        actions.push(new MoveAction(1, robot, destination));
+      }
+    }
+
+    const end = new Date().getTime() - start.getTime();
+    if (debugTime) this.debug(`moveToSeparationV2 time: ${end}ms`);
     return actions;
   }
 
@@ -311,55 +434,12 @@ export class ExpansionManager extends ClassLogger {
       );
 
       remainingSeparation.splice(bestDestinationIndex, 1);
-      const sameHigh = bestDestination.y === bestRobot.y;
-      if (sameHigh) {
-        actions.push(new MoveAction(1, bestRobot, bestDestination));
-      } else {
-        const yDirection =
-          (bestDestination.y - bestRobot.y) /
-          Math.abs(bestDestination.y - bestRobot.y);
-        const shouldGoVertically =
-          bestDestination.y !== bestRobot.y &&
-          map[bestRobot.y + yDirection][bestRobot.x].canMove &&
-          this.djikstraMap.get(bestDestination)![bestRobot.y + yDirection][
-            bestRobot.x
-          ] ===
-            this.getDistanceFromBlockToSeparation(bestRobot, bestDestination) -
-              1;
-        this.debug(
-          "Should go vertically",
-          shouldGoVertically,
-          [bestRobot.x, bestRobot.y],
-          yDirection,
-          [bestDestination.x, bestDestination.y]
-        );
-        if (shouldGoVertically) {
-          actions.push(
-            new MoveAction(
-              1,
-              bestRobot,
-              map[bestRobot.y + yDirection][bestRobot.x]
-            )
-          );
-        } else {
-          actions.push(new MoveAction(1, bestRobot, bestDestination));
-        }
-      }
+      actions.push(new MoveAction(1, bestRobot, bestDestination));
     }
 
     const end = new Date().getTime() - start.getTime();
     if (debugTime) this.debug(`moveToSeparation time: ${end}ms`);
     return actions;
-  }
-
-  predictBestMovesToSeparation() {
-    const minDistanceToSeparation = minBy(
-      myRobots,
-      (block) => block.distanceToSeparation
-    ).value;
-    this.debug(
-      `predictBestMovesToSeparation for ${minDistanceToSeparation} turns`
-    );
   }
 }
 

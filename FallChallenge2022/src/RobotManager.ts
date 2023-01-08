@@ -11,6 +11,7 @@ import {
   myStartPosition,
   opponentStartPosition,
   myBlocks,
+  map,
 } from "./State";
 
 export class RobotManager extends ClassLogger {
@@ -33,48 +34,67 @@ export class RobotManager extends ClassLogger {
         })
         .sort((a, b) => {
           const potentielRadius =
-            robot.island?.owner === Owner.ME ? Infinity : 4;
+            robot.island?.owner === Owner.ME ? Infinity : 5;
           const potentielA = a.getPotentiel(potentielRadius);
           const potentielB = b.getPotentiel(potentielRadius);
 
-          const distanceToMyStartA = myStartPosition.distanceToBlock(a);
-          const distanceToMyStartB = myStartPosition.distanceToBlock(b);
-          const distanceToOpponentStartA =
-            opponentStartPosition.distanceToBlock(a);
-          const distanceToOpponentStartB =
-            opponentStartPosition.distanceToBlock(b);
-          const isNearerOfMyStartA =
-            distanceToMyStartA <= distanceToOpponentStartA;
-          const isNearerOfMyStartB =
-            distanceToMyStartB <= distanceToOpponentStartB;
+          if (
+            potentielRadius !== Infinity &&
+            (a.distanceToSeparation > 3 || b.distanceToSeparation > 4)
+          ) {
+            return a.distanceToSeparation - b.distanceToSeparation;
+          }
 
-          const nearestOpponentADistance =
-            a.findNearestOpponent().nearestOpponentDistance;
-          const nearestOpponentBDistance =
-            b.findNearestOpponent().nearestOpponentDistance;
+          if (robot.initialOwner === Owner.OPPONENT) {
+            if (a.owner !== b.owner) {
+              if (a.owner === Owner.NONE) return -1;
+              if (a.owner === Owner.ME) return 1;
+              if (a.owner === Owner.OPPONENT) {
+                if (b.owner === Owner.NONE) return 1;
+                if (b.owner === Owner.ME) return -1;
+              }
+            }
+            return potentielB - potentielA;
+          }
+
+          // const distanceToMyStartA = myStartPosition.distanceToBlock(a);
+          // const distanceToMyStartB = myStartPosition.distanceToBlock(b);
+          // const distanceToOpponentStartA =
+          //   opponentStartPosition.distanceToBlock(a);
+          // const distanceToOpponentStartB =
+          //   opponentStartPosition.distanceToBlock(b);
+          // const isNearerOfMyStartA =
+          //   distanceToMyStartA <= distanceToOpponentStartA;
+          // const isNearerOfMyStartB =
+          //   distanceToMyStartB <= distanceToOpponentStartB;
+
+          // const nearestOpponentADistance =
+          //   a.findNearestOpponent().nearestOpponentDistance;
+          // const nearestOpponentBDistance =
+          //   b.findNearestOpponent().nearestOpponentDistance;
 
           // Ordre de priorité
           // - si case ennemie, on tue les robots en premier si mon robot est plus proche de mon point de départ que celui de l'ennemie
           // - qui a le meilleur potentiel
           // - le plus éloigné de notre position de départ
-          if (
-            isNearerOfMyStartA &&
-            isNearerOfMyStartB &&
-            ((a.owner === Owner.OPPONENT && a.units > 0) ||
-              (b.owner === Owner.OPPONENT && b.units > 0))
-          )
-            return (
-              (b.owner === Owner.OPPONENT ? b.units : 0) -
-              (a.owner === Owner.OPPONENT ? a.units : 0)
-            );
+          // if (
+          //   isNearerOfMyStartA &&
+          //   isNearerOfMyStartB &&
+          //   ((a.owner === Owner.OPPONENT && a.units > 0) ||
+          //     (b.owner === Owner.OPPONENT && b.units > 0))
+          // )
+          //   return (
+          //     (b.owner === Owner.OPPONENT ? b.units : 0) -
+          //     (a.owner === Owner.OPPONENT ? a.units : 0)
+          //   );
 
-          if (
-            nearestOpponentADistance !== nearestOpponentBDistance &&
-            nearestOpponentADistance >= 3 &&
-            nearestOpponentBDistance >= 3
-          ) {
-            return nearestOpponentADistance - nearestOpponentBDistance;
-          }
+          // if (
+          //   nearestOpponentADistance !== nearestOpponentBDistance &&
+          //   nearestOpponentADistance >= 3 &&
+          //   nearestOpponentBDistance >= 3
+          // ) {
+          //   return nearestOpponentADistance - nearestOpponentBDistance;
+          // }
           if (potentielA !== potentielB) return potentielB - potentielA;
           return side * (b.x - a.x);
         });

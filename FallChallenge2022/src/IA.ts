@@ -28,12 +28,14 @@ export class IA {
 
   chooseAction() {
     recyclerBuilder.computeGrassCreated();
+    const winRecyclers = recyclerBuilder.buildWinRecycler();
     const defenseActions = defenseManager.computeDefense();
-    const recyclerActions = recyclerBuilder.action();
     const moveToSeparationActions = expensionManager.moveAndBuildToSeparation();
     const robotActions = robotManager.action();
+    const recyclerActions = recyclerBuilder.action();
     const robotBuilderActions = robotBuilder.action();
     this.actions = [
+      ...winRecyclers,
       ...defenseActions,
       ...recyclerActions,
       ...moveToSeparationActions,

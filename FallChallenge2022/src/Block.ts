@@ -220,7 +220,7 @@ export class Block {
     return robots;
   }
 
-  findNearestOpponent() {
+  findNearestOpponent(owner = Owner.OPPONENT, maxDistance = Infinity) {
     if (this.nearestOpponent)
       return {
         nearestOpponent: this.nearestOpponent,
@@ -232,12 +232,16 @@ export class Block {
     let distance = 0;
 
     let nextBlocks: Block[] = [this];
-    while (!this.nearestOpponent && nextBlocks.length) {
+    while (
+      !this.nearestOpponent &&
+      nextBlocks.length &&
+      distance < maxDistance
+    ) {
       const currentBlocks = Array.from(nextBlocks);
       nextBlocks = [];
       while (currentBlocks.length) {
         const currentBlock = currentBlocks.pop()!;
-        if (currentBlock.owner === Owner.OPPONENT) {
+        if (currentBlock.owner === owner) {
           this.nearestOpponent = currentBlock;
           this.nearestOpponentDistance = distance;
           break;
@@ -263,6 +267,11 @@ export class Block {
     const hasVisited: Set<Block> = new Set();
     hasVisited.add(this);
 
+    const opponentPotentiel = (initialOwner: Owner) =>
+      initialOwner === Owner.ME && radius !== Infinity ? 3 : 1;
+    const nonePotentiel = (initialOwner: Owner) =>
+      initialOwner === Owner.ME || radius === Infinity ? 1 : 3;
+
     let nextBlocks: Block[] = [this];
     for (let i = 0; i <= radius; i++) {
       const currentBlocks = Array.from(nextBlocks);
@@ -271,9 +280,14 @@ export class Block {
       while (currentBlocks.length) {
         const currentBlock = currentBlocks.pop()!;
         if (currentBlock.owner === Owner.OPPONENT)
-          this.potentiel += 3 / distance;
-        else if (currentBlock.owner === Owner.NONE)
-          this.potentiel += 1 / distance;
+          this.potentiel +=
+            opponentPotentiel(currentBlock.initialOwner) / distance;
+        else if (currentBlock.owner === Owner.NONE) {
+          if (currentBlock.y === 0 || currentBlock.y === height - 1) {
+            this.potentiel += 2 / distance;
+          }
+          this.potentiel += nonePotentiel(currentBlock.initialOwner) / distance;
+        }
         for (const neighbor of currentBlock.neighbors) {
           if (!hasVisited.has(neighbor) && neighbor.canMove) {
             hasVisited.add(neighbor);
@@ -313,8 +327,13 @@ export class Block {
           block.scrapAmount > scrapAmount ? scrapAmount : block.scrapAmount;
       }
 
-      if (block.scrapAmount <= scrapAmount && !this.isNearOfARecycler(owner))
-        grassCreated += 1;
+      if (block.scrapAmount <= scrapAmount && !this.isNearOfARecycler(owner)) {
+        if (block.initialOwner === Owner.ME) {
+          grassCreated += 1;
+        } else if (block.initialOwner === Owner.OPPONENT) {
+          grassCreated -= 1;
+        }
+      }
     }
     this.gains = {
       gains: total,
