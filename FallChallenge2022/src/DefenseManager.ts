@@ -138,7 +138,7 @@ export class DefenseManager extends ClassLogger {
         (total, neighbor) => total + neighbor.units,
         0
       );
-      if (blockToDefend.canBuild) {
+      if (blockToDefend.canBuild && myMatter >= 10) {
         const action = this.builDefensiveRecycler(
           dangerousRobot,
           blockToDefend,

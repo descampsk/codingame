@@ -184,7 +184,11 @@ export class ExpansionManager extends ClassLogger {
       "RemainingSeparation",
       remainingSeparation.map((block) => [block.x, block.y])
     );
-    if (this.isExpansionDone || !remainingSeparation.length) {
+    if (
+      this.isExpansionDone ||
+      !remainingSeparation.length ||
+      myRobots.length < 4
+    ) {
       this.isExpansionDone = true;
       return actions;
     }
