@@ -3,11 +3,11 @@ import { Block } from "./Block";
 
 export const debugTime = false;
 
-export const DEBUG = false;
+export const DEBUG = true;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const debug = (...data: any[]) => {
-  if (DEBUG) console.error(...data);
+  if (DEBUG && typeof console.error === "function") console.error(...data);
 };
 
 export function minBy<T>(

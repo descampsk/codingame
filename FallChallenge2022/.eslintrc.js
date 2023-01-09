@@ -3,7 +3,7 @@ module.exports = {
     node: true,
     es2021: true,
   },
-  ignorePatterns: ["dist/**/*.js"],
+  ignorePatterns: ["dist/**/*.js", "saved/**/*.js"],
   extends: [
     "airbnb-base",
     "eslint:recommended",

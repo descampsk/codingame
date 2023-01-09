@@ -164,9 +164,7 @@ export class ExpansionManager extends ClassLogger {
     return this.djikstraMap.get(separation)![block.y][block.x];
   }
 
-  moveAndBuildToSeparation() {
-    const start = new Date();
-    const actions: Action[] = [];
+  private getRemainingSeparation() {
     const remainingSeparation = this.separation.filter(
       (block) =>
         // units = 0 because an other unit could move there to defend and update the block units
@@ -175,122 +173,19 @@ export class ExpansionManager extends ClassLogger {
         block.units === 0 &&
         block.island?.owner === Owner.BOTH
     );
-    // .sort(
-    //   (a, b) =>
-    //     computeManhattanDistance(a, myStartPosition) -
-    //     computeManhattanDistance(b, myStartPosition)
-    // );
     this.debug(
       "RemainingSeparation",
       remainingSeparation.map((block) => [block.x, block.y])
     );
-    if (
-      this.isExpansionDone ||
-      !remainingSeparation.length ||
-      myRobots.length < 4
-    ) {
-      this.isExpansionDone = true;
-      return actions;
-    }
-    actions.push(
-      ...this.moveToSeparationV2(remainingSeparation),
-      ...this.buildToSeparation(remainingSeparation)
-    );
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`moveAndBuildToSeparation time: ${end}ms`);
-    return actions;
+    return remainingSeparation;
   }
 
-  buildToSeparation(remainingSeparation: Block[]) {
-    const start = new Date();
-    const actions: Action[] = [];
-
-    this.debug(
-      "RemainingSeparationAfterMove",
-      remainingSeparation.map((block) => [block.x, block.y])
-    );
-
-    const minMatters = recyclerBuilder.hasBuildLastRound ? 10 : 20;
-
-    // On va créer des robots pour les destinations manquantes
-    if (remainingSeparation.length) {
-      const blocksToSpawn = myBlocks.filter(
-        (block) =>
-          block.canSpawn &&
-          (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
-          block.willBecomeGrass > 1 &&
-          block.neighbors.find((a) => a.owner !== Owner.ME)
-      );
-      while (remainingSeparation.length && myMatter >= minMatters) {
-        let bestDestination = remainingSeparation[0];
-        let bestDestinationIndex = 0;
-        let minDistance = Infinity;
-        let bestBlockToSpawn = myBlocks[0];
-        for (const [
-          indexDestination,
-          destination,
-        ] of remainingSeparation.entries()) {
-          for (const block of blocksToSpawn) {
-            const distance = this.getDistanceFromBlockToSeparation(
-              block,
-              destination
-            );
-            if (distance < minDistance) {
-              minDistance = distance;
-              bestDestination = destination;
-              bestDestinationIndex = indexDestination;
-              bestBlockToSpawn = block;
-            }
-            if (
-              distance === minDistance &&
-              side * (block.x - bestBlockToSpawn.x) < 0
-            ) {
-              minDistance = distance;
-              bestDestination = destination;
-              bestDestinationIndex = indexDestination;
-              bestBlockToSpawn = block;
-            }
-          }
-        }
-        this.debug(
-          `BestBlock to spawn ${bestBlockToSpawn.x},${bestBlockToSpawn.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
-        );
-        remainingSeparation.splice(bestDestinationIndex, 1);
-        actions.push(new SpawnAction(1, bestBlockToSpawn));
-      }
-    }
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`buildToSeparation time: ${end}ms`);
-    return actions;
-  }
-
-  moveToSeparationV2(remainingSeparation: Block[]) {
-    const start = new Date();
-    const actions: Action[] = [];
-    const robots = myBlocks
-      .filter(
-        (block) =>
-          block.units > 0 &&
-          block.hasMoved < block.units &&
-          block.distanceToSeparation > 0
-      )
-      .flatMap((robot) => robot.getOneRobotPerUnit())
-      .filter((robot) => {
-        const { nearestOpponentDistance } = robot.findNearestOpponent();
-        const { distanceToSeparation } = robot;
-        return distanceToSeparation < nearestOpponentDistance;
-      });
-
-    this.debug(
-      "AvailableRobots",
-      robots.map((robot) => [robot.x, robot.y])
-    );
-
-    if (!remainingSeparation.length || !robots.length) {
-      return actions;
-    }
-
-    const distanceFromSeparationToRobot: number[][] = [];
+  private computeMunkres(
+    remainingSeparation: Block[],
+    robots: Block[],
+    blocksToSpawn: Block[]
+  ) {
+    const distanceFromSeparationToBlock: number[][] = [];
     for (const [indexSeparation, separation] of remainingSeparation.entries()) {
       const row = [];
       for (const robot of robots) {
@@ -320,129 +215,133 @@ export class ExpansionManager extends ClassLogger {
           row.push(distance - 0.1);
         else row.push(distance);
       }
-      distanceFromSeparationToRobot.push(row);
-    }
-    this.debug("distanceFromSeparationToRobot", distanceFromSeparationToRobot);
-    const bestRobotsForDestination = munkres(
-      distanceFromSeparationToRobot
-    ) as number[][];
-    this.debug("bestRobotsForDestination", bestRobotsForDestination);
-    const originalDestination = remainingSeparation.slice(0);
-    for (let i = 0; i < bestRobotsForDestination.length; i++) {
-      const [destinationIndex, robotIndex] = bestRobotsForDestination[i];
-      const destination = originalDestination[destinationIndex];
-      const indexToDelete = remainingSeparation.findIndex((block) =>
-        block.equals(destination)
-      );
-      remainingSeparation.splice(indexToDelete, 1);
-      const robot = robots[robotIndex];
-      const distance =
-        distanceFromSeparationToRobot[destinationIndex][robotIndex];
-      const { nearestOpponentDistance } = robot.findNearestOpponent();
-      if (nearestOpponentDistance + 2 < distance) {
-        this.debug(
-          `Robot ${robot.x},${robot.y} wont go to ${destination.x},${destination.y} with a distance of ${distance} because it higher than ${nearestOpponentDistance} + 2`
-        );
-      } else {
-        this.debug(
-          `Robot ${robot.x},${robot.y} should go to ${destination.x},${destination.y} with a distance of ${distance}`
-        );
-        actions.push(new MoveAction(1, robot, destination));
-      }
-    }
 
-    const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`moveToSeparationV2 time: ${end}ms`);
-    return actions;
+      // On rajoute les spawns ici
+      const minDistanceToSpawn =
+        minBy(blocksToSpawn, (block) => separation.distanceToBlock(block))
+          .value! + 1.1;
+
+      const spawnMatter = recyclerBuilder.hasBuildLastRound
+        ? myMatter
+        : myMatter - 10;
+
+      for (let i = 0; i < Math.floor(spawnMatter / 10); i++) {
+        row.push(minDistanceToSpawn);
+      }
+
+      distanceFromSeparationToBlock.push(row);
+    }
+    this.debug("distanceFromSeparationToRobot", distanceFromSeparationToBlock);
+    const bestRobotAndSpawnsForDestination = munkres(
+      distanceFromSeparationToBlock
+    ) as number[][];
+    this.debug(
+      "bestRobotAndSpawnsForDestination",
+      bestRobotAndSpawnsForDestination
+    );
+    return { bestRobotAndSpawnsForDestination, distanceFromSeparationToBlock };
   }
 
-  moveToSeparation(remainingSeparation: Block[]) {
+  moveAndBuildToSeparation() {
     const start = new Date();
     const actions: Action[] = [];
     const robots = myBlocks
-      .filter((block) => block.units > 0 && block.hasMoved < block.units)
-      .flatMap((robot) => robot.getOneRobotPerUnit());
-    const maxDistanceFromStartToSeparation = maxBy(this.separation, (block) =>
-      myStartPosition.distanceToBlock(block)
-    ).maxValue!;
+      .filter(
+        (block) =>
+          block.units > 0 &&
+          block.hasMoved < block.units &&
+          block.distanceToSeparation > 0
+      )
+      .flatMap((robot) => robot.getOneRobotPerUnit())
+      .filter((robot) => {
+        const { nearestOpponentDistance } = robot.findNearestOpponent();
+        const { distanceToSeparation } = robot;
+        return distanceToSeparation < nearestOpponentDistance;
+      });
 
-    const manhattanDistanceToMyStart: Map<Block, number> = new Map();
-    for (const destination of remainingSeparation) {
-      manhattanDistanceToMyStart.set(
-        destination,
-        computeManhattanDistance(destination, myStartPosition)
-      );
-    }
-
-    const minDistanceToMyBlocksMap: Map<Block, number> = new Map();
-    const myBlockBorders = myBlocks.filter((block) =>
-      block.neighbors.find((neighbor) => neighbor.owner === Owner.NONE)
+    this.debug(
+      "AvailableRobots",
+      robots.map((robot) => [robot.x, robot.y])
     );
-    for (const separation of remainingSeparation) {
-      const min = minBy(myBlockBorders, (block) =>
-        this.getDistanceFromBlockToSeparation(block, separation)
-      ).value!;
-      minDistanceToMyBlocksMap.set(separation, min);
+
+    const remainingSeparation = this.getRemainingSeparation();
+
+    if (
+      this.isExpansionDone ||
+      !remainingSeparation.length ||
+      myRobots.length < 4
+    ) {
+      this.isExpansionDone = true;
+      return actions;
     }
 
-    while (robots.length && remainingSeparation.length) {
-      let bestDestination = remainingSeparation[0];
-      let bestDestinationIndex = 0;
-      let minDistance = Infinity;
-      let bestRobot = robots[0];
-      let bestRobotIndex = 0;
-      for (const [
-        indexDestination,
-        destination,
-      ] of remainingSeparation.entries()) {
-        for (const [indexRobot, robot] of robots.entries()) {
-          const distance = this.getDistanceFromBlockToSeparation(
-            robot,
-            destination
+    const blocksToSpawn = myBlocks.filter(
+      (block) =>
+        block.canSpawn &&
+        (block.island?.owner !== Owner.ME || !block.island?.hasRobot) &&
+        block.willBecomeGrass > 1 &&
+        block.neighbors.find((a) => a.owner !== Owner.ME)
+    );
+
+    this.debug(
+      "blocksToSpawn",
+      blocksToSpawn.map((block) => [block.x, block.y])
+    );
+
+    const { bestRobotAndSpawnsForDestination, distanceFromSeparationToBlock } =
+      this.computeMunkres(remainingSeparation, robots, blocksToSpawn);
+
+    for (let i = 0; i < bestRobotAndSpawnsForDestination.length; i++) {
+      const [destinationIndex, robotOrSpawnIndex] =
+        bestRobotAndSpawnsForDestination[i];
+      const distance =
+        distanceFromSeparationToBlock[destinationIndex][robotOrSpawnIndex];
+      const destination = remainingSeparation[destinationIndex];
+      // Si l'index est inférieur à la taille de la liste des robots, alors c'est bien un robot sinon c'est un spawn
+      if (robotOrSpawnIndex < robots.length) {
+        const robot = robots[robotOrSpawnIndex];
+
+        const { nearestOpponentDistance } = robot.findNearestOpponent();
+        if (nearestOpponentDistance + 2 < distance) {
+          this.debug(
+            `Robot ${robot.x},${robot.y} wont go to ${destination.x},${destination.y} with a distance of ${distance} because it higher than ${nearestOpponentDistance} + 2`
           );
-          if (
-            distance < minDistance ||
-            (distance === minDistance &&
-              manhattanDistanceToMyStart.get(bestDestination)! <
-                manhattanDistanceToMyStart.get(destination)!)
-          ) {
-            minDistance = distance;
-            bestDestination = destination;
-            bestDestinationIndex = indexDestination;
-            bestRobotIndex = indexRobot;
-            bestRobot = robot;
-          }
+        } else {
+          this.debug(
+            `Robot ${robot.x},${robot.y} should go to ${destination.x},${destination.y} with a distance of ${distance}`
+          );
+          actions.push(new MoveAction(1, robot, destination));
+        }
+      } else {
+        // On est dans le cas d'un spawn
+        const spawn = blocksToSpawn
+          .filter((block) => {
+            this.debug(
+              "Spawn",
+              [block.x, block.y],
+              destination.distanceToBlock(block),
+              distance,
+              distance - 1.1,
+              destination.distanceToBlock(block) + 1.1 === distance
+            );
+            return destination.distanceToBlock(block) + 1.1 === distance;
+          })
+          .sort((a, b) => side * (a.x - b.x))[0];
+        if (spawn) {
+          this.debug(
+            `We will spawn a robot on ${spawn.x},${spawn.y} should go to ${destination.x},${destination.y} with a distance of ${distance}`
+          );
+          actions.push(new SpawnAction(1, spawn));
+        } else {
+          this.debug(
+            `We didn't find a block to spawn to go to ${destination.x},${destination.y} with a distance of ${distance}`
+          );
         }
       }
-
-      robots.splice(bestRobotIndex, 1);
-      // Sometimes it s better to let this robot move because it try to go in a too far away block
-      // We just remove it and let the expension robot builder create a new way in a better place
-      if (minDistance - 5 > maxDistanceFromStartToSeparation - turn) {
-        this.debug(
-          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${maxDistanceFromStartToSeparation} - ${turn} + 5 so we prefer to find an other robot.`
-        );
-        continue;
-      }
-      const minDistanceToMyBlocks =
-        minDistanceToMyBlocksMap.get(bestDestination)!;
-      if (minDistance > minDistanceToMyBlocks + 2) {
-        this.debug(
-          `BestRobot ${bestRobot.x},${bestRobot.y} should go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks but it is higher than ${minDistanceToMyBlocks} so we prefer to find an other robot.`
-        );
-        continue;
-      }
-
-      this.debug(
-        `BestRobot ${bestRobot.x},${bestRobot.y} go to ${bestDestination.x},${bestDestination.y} at ${minDistance} blocks`
-      );
-
-      remainingSeparation.splice(bestDestinationIndex, 1);
-      actions.push(new MoveAction(1, bestRobot, bestDestination));
     }
 
     const end = new Date().getTime() - start.getTime();
-    if (debugTime) this.debug(`moveToSeparation time: ${end}ms`);
+    if (debugTime) this.debug(`moveAndBuildToSeparation time: ${end}ms`);
     return actions;
   }
 }

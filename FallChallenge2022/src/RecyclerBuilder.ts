@@ -18,6 +18,7 @@ import {
   Owner,
   side,
   turn,
+  width,
 } from "./State";
 import { ia } from "./IA";
 import { ClassLogger } from "./ClassLogger";
@@ -280,7 +281,7 @@ export class RecyclerBuilder extends ClassLogger {
       (block) =>
         block.canBuild &&
         block.initialOwner === Owner.ME &&
-        (turn < 5 ||
+        (turn < width / 2 + 1 ||
           this.myGrassCreated + block.computeGains().grassCreated + 1 <
             this.opponentGrassCreated) &&
         block.computeGains().gains > 20 &&
